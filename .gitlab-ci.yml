@@ -45,7 +45,7 @@ coverity:
   script:
     - mkdir build-coverity
     - buildah bud --isolation chroot --build-arg ORG=gicmo --build-arg PROJECT=bolt --build-arg TOKEN=$COVERITY_TOKEN -t bolt-coverity -f ./contrib/Dockerfile-coverity .
-    - podman run --rm -e COVERITY_TOKEN=$COVERITY_TOKEN -e COVERITY_EMAIL=$COVERITY_EMAIL -t -v `pwd`:/src:Z -v `pwd`/build-coverity:/build:Z bolt-coverity ./contrib/coverity.sh
+    - podman run --rm --dns=8.8.8.8 --net=host -e COVERITY_TOKEN=$COVERITY_TOKEN -e COVERITY_EMAIL=$COVERITY_EMAIL -t -v `pwd`:/src:Z -v `pwd`/build-coverity:/build:Z bolt-coverity ./contrib/coverity.sh
   artifacts:
     paths:
     - build-coverity/cov-int/build-log.txt
