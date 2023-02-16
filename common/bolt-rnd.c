@@ -33,7 +33,7 @@
 # define GRND_NONBLOCK 0
 #endif
 
-int
+BoltRng
 bolt_get_random_data (void *buf, gsize n)
 {
   gboolean ok;
