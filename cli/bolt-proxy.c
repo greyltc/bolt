@@ -65,7 +65,7 @@ static void     bolt_proxy_base_finalize (gpointer g_class);
 GType
 bolt_proxy_get_type (void)
 {
-  static volatile gsize proxy_type = 0;
+  static gsize proxy_type = 0;
 
   if (g_once_init_enter (&proxy_type))
     {

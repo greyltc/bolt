@@ -118,7 +118,7 @@ static void     bolt_exported_base_finalize (gpointer g_class);
 GType
 bolt_exported_get_type (void)
 {
-  static volatile gsize exported_type = 0;
+  static gsize exported_type = 0;
 
   if (g_once_init_enter (&exported_type))
     {
