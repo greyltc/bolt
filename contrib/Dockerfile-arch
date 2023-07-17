@@ -19,7 +19,9 @@ RUN pacman -S --noconfirm \
     umockdev \
     valgrind
 
-RUN pip3 install python-dbusmock pylint==2.4.1
+RUN pacman -S --noconfirm \
+    python-dbusmock \
+    python-pylint
 
 RUN mkdir /src /build
 WORKDIR /src
