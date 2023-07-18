@@ -927,7 +927,8 @@ manager_domain_ensure (BoltManager        *mgr,
   if (domain == NULL)
     {
       bolt_warn_err (err, LOG_TOPIC ("udev"),
-                     "failed to create domain: %s");
+                     "failed to create domain: %s",
+                     udev_device_get_syspath (dom));
       return NULL;
     }
 
