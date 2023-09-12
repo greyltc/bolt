@@ -1,3 +1,16 @@
+Version 0.9.6
+-------------
+Released: 2023-09-12
+
+* The compiler warnings caused by the incorrect data type declaration
+  were fixed.
+
+* The log message `boltd[123]: [93B blob data]` was fixed. The sysfs path
+  will be printed when the domain can't be found.
+
+* CI: Replaced the docker command with podman and fixed the DNS issues for
+  podman.
+
 Version 0.9.5
 -------------
 Released: 2023-1-3
