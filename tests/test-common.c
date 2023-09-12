@@ -179,7 +179,7 @@ typedef struct
 static void
 test_enums (TestRng *tt, gconstpointer user_data)
 {
-  g_autoptr(GEnumClass) klass;
+  g_autoptr(GEnumClass) klass = NULL;
   g_autoptr(GError) err = NULL;
   const char *str;
   gint val;
@@ -415,7 +415,7 @@ test_error (TestRng *tt, gconstpointer user_data)
 static void
 test_flags (TestRng *tt, gconstpointer user_data)
 {
-  g_autoptr(GFlagsClass) klass;
+  g_autoptr(GFlagsClass) klass = NULL;
   g_autoptr(GError) err = NULL;
   char *str;
   guint val;
