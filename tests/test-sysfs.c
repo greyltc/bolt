@@ -639,13 +639,14 @@ static void
 test_sysfs_domains (TestSysfs *tt, gconstpointer user)
 {
   g_autoptr(GError) err = NULL;
-  const char *ids[5];
-  BoltSecurity sl[5] = {BOLT_SECURITY_NONE,
+  const char *ids[6];
+  BoltSecurity sl[6] = {BOLT_SECURITY_NONE,
                         BOLT_SECURITY_DPONLY,
                         BOLT_SECURITY_USER,
                         BOLT_SECURITY_SECURE,
-                        BOLT_SECURITY_USBONLY};
-  BoltDomain *all[5] = {NULL, };
+                        BOLT_SECURITY_USBONLY,
+                        BOLT_SECURITY_NOPCIE};
+  BoltDomain *all[6] = {NULL, };
   BoltDomain *domains = NULL;
   BoltDomain *iter;
   int n;

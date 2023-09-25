@@ -195,6 +195,7 @@ test_enums (TestRng *tt, gconstpointer user_data)
     {BOLT_TYPE_SECURITY,  "dponly",  BOLT_SECURITY_DPONLY},
     {BOLT_TYPE_SECURITY,  "user",    BOLT_SECURITY_USER},
     {BOLT_TYPE_SECURITY,  "secure",  BOLT_SECURITY_SECURE},
+    {BOLT_TYPE_SECURITY,  "nopcie",  BOLT_SECURITY_NOPCIE},
     {BOLT_TYPE_TEST_ENUM, "unknown", BOLT_TEST_UNKNOWN},
     {BOLT_TYPE_TEST_ENUM, "one",     BOLT_TEST_ONE},
     {BOLT_TYPE_TEST_ENUM, "two",     BOLT_TEST_TWO},
@@ -224,11 +225,13 @@ test_enums (TestRng *tt, gconstpointer user_data)
   g_assert_cmpstr (bolt_security_to_string (BOLT_SECURITY_DPONLY), ==, "dponly");
   g_assert_cmpstr (bolt_security_to_string (BOLT_SECURITY_USER), ==, "user");
   g_assert_cmpstr (bolt_security_to_string (BOLT_SECURITY_SECURE), ==, "secure");
+  g_assert_cmpstr (bolt_security_to_string (BOLT_SECURITY_NOPCIE), ==, "nopcie");
 
   g_assert_cmpuint (bolt_security_from_string ("none"), ==, BOLT_SECURITY_NONE);
   g_assert_cmpuint (bolt_security_from_string ("dponly"), ==, BOLT_SECURITY_DPONLY);
   g_assert_cmpuint (bolt_security_from_string ("user"), ==, BOLT_SECURITY_USER);
   g_assert_cmpuint (bolt_security_from_string ("secure"), ==, BOLT_SECURITY_SECURE);
+  g_assert_cmpuint (bolt_security_from_string ("nopcie"), ==, BOLT_SECURITY_NOPCIE);
 
   klass = g_type_class_ref (BOLT_TYPE_SECURITY);
 

@@ -483,6 +483,7 @@ class BoltDomain(ProxyWrapper):
     SECURITY_SECURE = 'secure'
     SECURITY_DPONLY = 'dponly'
     SECURITY_USBONLY = 'usbonly'
+    SECURITY_NOPCIE = 'nopcie'
 
     @classmethod
     def security_levels(cls):
@@ -802,7 +803,8 @@ class TbDevice(Device):
             if self.key is None:
                 flags |= BoltDevice.NOKEY
         elif self.domain.security in [TbDomain.SECURITY_DPONLY,
-                                      TbDomain.SECURITY_USBONLY]:
+                                      TbDomain.SECURITY_USBONLY,
+                                      TbDomain.SECURITY_NOPCIE]:
             flags |= BoltDevice.NOPCIE
 
         return flags
@@ -884,6 +886,7 @@ class TbDomain(Device):
     SECURITY_SECURE = 'secure'
     SECURITY_DPONLY = 'dponly'
     SECURITY_USBONLY = 'usbonly'
+    SECURITY_NOPCIE = 'nopcie'
 
     def __init__(self, security=SECURITY_SECURE, index=0, host=None, acl=None, iommu=None):
         assert host
