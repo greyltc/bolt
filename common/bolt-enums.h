@@ -172,6 +172,7 @@ typedef enum {
   BOLT_SECURITY_USER = '1',
   BOLT_SECURITY_SECURE = '2',
   BOLT_SECURITY_USBONLY = 4,
+  BOLT_SECURITY_NOPCIE = 5,
 
 } BoltSecurity;
 
