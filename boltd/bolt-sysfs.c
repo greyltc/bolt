@@ -511,14 +511,10 @@ bolt_sysfs_info_for_device (struct udev_device *udev,
   auth = sysfs_get_sysattr_value_as_int (udev, "authorized");
   info->authorized = auth;
 
-  if (auth < 0)
-    {
-      int code = g_io_error_from_errno (errno);
-      g_set_error (error, G_IO_ERROR, code,
-                   "could not read 'authorized': %s",
-                   g_strerror (errno));
-      return FALSE;
-    }
+  /* Since the attribute will be set to invisible for "nopcie" security
+   * level, auth = -1 is possible and correct. The error return for this
+   * case can be removed. Therefore, there are three status for athorized
+   * attribute. 0 unauthorized, 1 authorized, and -1 attribute not found */
 
   info->keysize = sysfs_get_sysattr_size (udev, "key");
   info->boot = sysfs_get_sysattr_value_as_int (udev, "boot");
