@@ -1,10 +1,10 @@
-Name:          bolt
-Version:       0.9.4
+Name:          bolt-preview
+Version:       0.9.7
 Release:       1%{?dist}
 Summary:       Thunderbolt device manager
 License:       LGPLv2+
 URL:           https://gitlab.freedesktop.org/bolt/bolt
-Source0:       %{url}/-/archive/%{version}/%{name}-%{version}.tar.gz
+Source0:       %{url}/-/archive/%{version}/bolt-%{version}.tar.gz
 
 BuildRequires: gcc
 BuildRequires: asciidoc
