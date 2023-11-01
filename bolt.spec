@@ -76,6 +76,9 @@ mentioned tasks.
 %ghost %dir %{_localstatedir}/lib/boltd
 
 %changelog
+* Wed Nov 01 2023 Kate Hsuan <hpa@redhat.com> 0.9.7-1
+- new package built with tito
+
 * Tue Aug 23 2022 Simon Steinbeiss <simon.steinbeiss@redhat.com> - 0.9.3-1
 - New upstream release
 
