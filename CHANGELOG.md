@@ -1,74 +1,69 @@
-Version 0.9.6
--------------
+## Version 0.9.6
+
 Released: 2023-09-12
 
-* The compiler warnings caused by the incorrect data type declaration
-  were fixed.
+- The compiler warnings caused by the incorrect data type declaration were fixed.
 
-* The log message `boltd[123]: [93B blob data]` was fixed. The sysfs path
+- The log message `boltd[123]: [93B blob data]` was fixed. The sysfs path
   will be printed when the domain can't be found.
 
-* CI: Replaced the docker command with podman and fixed the DNS issues for
-  podman.
+- CI: Replaced the docker command with podman and fixed the DNS issues for podman.
 
-Version 0.9.5
--------------
+## Version 0.9.5
+
 Released: 2023-1-3
 
-* Fixed several test and build setting issues.
+- Fixed several test and build setting issues.
 
-* Introduced packit. Packit was used to package rpm to downstream Fedora
+- Introduced packit. Packit was used to package rpm to downstream Fedora
   automatically. Moreover, Koji and bodhi could be triggered by packit
   automatically.
 
+## Version 0.9.4
 
-Version 0.9.4
--------------
 Released: 2022-11-4
 
-* Introduced the bot which was taking over the package works.
+- Introduced the bot which was taking over the package works.
 
-Version 0.9.3
--------------
+## Version 0.9.3
+
 _Fix for the fix_
 Released: 2022-08-23
 
-* Work around a glib fix that changed behavior of the log API where now
+- Work around a glib fix that changed behavior of the log API where now
   calling `g_log_set_writer_func` results in an hard error, which broke
   the test suite since aforementioned function was indeed called more
   than once. Nothing a level of indirection couldn't fix.
 
-* CI: disable Debian based ci for now. Another glib fix broke the Debian
+- CI: disable Debian based ci for now. Another glib fix broke the Debian
   and Arch based docker container. Fedora has patched glib to bake the
   fix out again so it is fine.
 
+## Version 0.9.2
 
-Version 0.9.2
--------------
 _Please get along_
 Released: 2022-01-27
 
-* This release is compatible with umockdev >= 0.16.3; there was a change in
+- This release is compatible with umockdev >= 0.16.3; there was a change in
   umockdev that made our test fail with it, since both our test and umockev
   were trying to create the same directorires. bolt now allows for the dir
   to already exist.
 
-* The license for `90-bolt.rules` has changed from `GPL-2.1+`, which does
+- The license for `90-bolt.rules` has changed from `GPL-2.1+`, which does
   not exist and was probably was confused with `LGPL-2.1+`, to `GPL 2.0+`.
 
-* Documentation has been updated and spelling mistakes fixed.
+- Documentation has been updated and spelling mistakes fixed.
 
-* Various improvements for continuous integration.
+- Various improvements for continuous integration.
 
-* The minimum required version of meson has been bumped to 0.46.0.
+- The minimum required version of meson has been bumped to 0.46.0.
 
+## Version 0.9.1
 
-Version 0.9.1
--------------
 _Unstable icy waters_
 Released: 2020-11-30
 
-* Bug fixes for integrated thunderbolt controllers:
+- Bug fixes for integrated thunderbolt controllers:
   On Ice Lake, the Thunderbolt 3 i/o subsystem is fully integrated into the die.
   As a side effect it does not have a DROM, which means the host udev device
   does not have the device and vendor name and id attributes.
@@ -81,38 +76,36 @@ Released: 2020-11-30
   - Version the store and use that to clean up stale domains once [!226, !231]
   - Host identification for embedded thunderbolt controllers [!233]
 
-* Various other small bug fixes and memory leak fixes.
+- Various other small bug fixes and memory leak fixes.
 
+## Version 0.9
 
-Version 0.9
------------
 _Four comes after Three_
 Released: 2020-06-15
 
-* New Features:
+- New Features:
   - Add 'Generation' attribute for the Manager [!197]
   - Ability to change the policy of a stored device [!202]
   - The BootACL Domain property is now writable [!184]
   - Support for systemd's service watchdog [!185]
   - Expose Link Speed sysfs attributes [!214]
 
-* Improvements:
+- Improvements:
   - boltclt: show timestamps in 'monitor' call [!208]
   - Persist the host device [!194]
 
-* Bug fixes:
+- Bug fixes:
   - Fix a flaky test [!217, #161]
   - Plug small memory leaks in error conditions [!217]
   - Ignore spurious wakeup device uevents for probing [!209]
   - Preserve keystate when updating devices [!192]
 
+## Version 0.8
 
-Version 0.8
------------
 _I owe it to the MM U!_
 Released: 2019-06-14
 
-* New Features:
+- New Features:
   - **IOMMU support**: adapt behavior iommu support is present and active [#128]
     - automatically enroll new devices with the new `iommu` policy when iommu is active
     - automatically authorize devices with the `iommu` policy if iommu is active
@@ -120,49 +113,46 @@ Released: 2019-06-14
   - Chain authorization and enrollment via `boltctl {enroll, authorize} --chain` [!153, !154]
   - `bolt-mock` script for interactively testing `boltd` [!152]
 
-* Improvements:
+- Improvements:
   - Automatically import devices that were authorized at boot [#137]
   - Make tests installable [#140]
   - Honour `STATE_DIRECTORY` [!159] and `RUNTIME_DIRECTORY` [!161]
   - Profiling support via gprof [!168]
 
-* Bug fixes:
+- Bug fixes:
   - Better handling of random data generation [#132, !165]
   - Fix double free in case of client creation failure [!148]
   - Fix invalid format string in warning [!14]
 
-* NB for packagers:
+- NB for packagers:
   - The dbus configuration is now installed in `$datadir/dbus-1/system.d` instead of `$sysconfdir` [!177].
   - To install tests, configure with `-Dinstall-tests=true`.
 
+## Version 0.7
 
-Version 0.7
------------
 _The Known Unknowns_
 Released: 2019-01-01
 
-
-* Features:
+- Features:
   - announce status to systemd via sd_notify (using a simple custom implementation) [!143]
 
-* Bug fixes:
+- Bug fixes:
   - properly update global security level status [#131 via !141]
   - adapt to `systemd` 240 not sending `bind`/`unbind` uevents [#133 via !145]
   - fix compilation on musl [#126 via !140]
   - daemon: use `g_unix_signal_source…` to catch signals [#127, #129 via !138]
 
-* Improvements
+- Improvements
   - precondition checks cleanup and completion [#124 via !139]
   - error cleanup [#125, !142]
   - fix some leaks and issues uncovered by coverity [!144]
 
+## Version 0.6
 
-Version 0.6
------------
 _Make the firmware do it!_
 Released: 2018-11-28
 
-* New Features:
+- New Features:
   - **pre-boot access control list, aka. `BootACL`** support [!119]
     - domains objects are now persistent
       - new `Uid` (dbus) / `uid` (object) property derived from the uuid of the device representing the root switch
@@ -178,7 +168,7 @@ Released: 2018-11-28
 
   - `boltctl` gained the `-U, --uuid` option, to control how uuids are printed [!124]
 
-* Improvements and fixes:
+- Improvements and fixes:
   - Testing [!127]
     - The test coverage increased to `84.80%` overall and to `90.0%` for the `boltd` source
     - Coverage is reported for merge requests via the fedora ci image [!126]
@@ -191,13 +181,12 @@ Released: 2018-11-28
     - Properly adjust policies when enrolling already authorized devices [!136]
     - Fix potential crash when logging assertions `g_return_if_fail` [!121]
 
+## Version 0.5
 
-Version 0.5
------------
 _You've got the Power_
 Released: 2018-09-28
 
-* New Features:
+- New Features:
 
   - Force-Power DBus API ⚡(!101)
     - A new interface to boltd to control the (force) power mechanism (#106)
@@ -209,14 +198,12 @@ Released: 2018-09-28
   - Systemd dependency is now optional (!106, !103)
   - Company and brand names are cleaned up for the display name (#102)
 
-
-* Bug fixes and cleanups:
+- Bug fixes and cleanups:
 
   - Emit proper notification for security-level property changes (!100)
   - Auto generate the object path for BoltDevice (!102)
 
-
-* NB for packagers:
+- NB for packagers:
 
   - `-Ddb-path` is **DEPRECATED**, use `-Ddb-name` instead (!113)
   - meson >= 0.44.0 is required.
@@ -225,55 +212,52 @@ Released: 2018-09-28
     - Use systemd for runtime and state directory management (!113)
     - Sandbox is tightened (!97)
 
+## Version 0.4
 
-Version 0.4
------------
 _The Race Is Over_
 Released: 2018-05-28
 
-* New features:
+- New features:
   - auto import of devices authorized during boot [!90]
   - allow enrolling of already authorized devices, i.e. importing of devices [!86]
   - label new devices and detect duplicates [!91]
 
-* Be more robust:
+- Be more robust:
   - Handle NULL errors in logging code better [!89]
   - Properly handle empty device database entries [!87]
   - Better authentication errors and logging [!85]
   - More tests
 
-* Internal changes:
+- Internal changes:
   - Make sure we don't miss device status changes [!82]
   - Rework property change notification dispatching [!83]
 
+## Version 0.3
 
-Version 0.3
------------
 _Capture The Flags_
 Released: 2018-05-28
 
-* Prepare for upcoming kernel changes:
+- Prepare for upcoming kernel changes:
   - Support for `usbonly` (SL4) security level (#75)
   - Support for `boot` sysfs device attribute (#76)
 
-* DBus API changes:
+- DBus API changes:
   - `BoltStatus` was split (#81), so that:
-      - `Device.Status` does not report `authorized-xxx` anymore
-      - `Device.AuthFlags` added to indicate auth details, e.g. `secure`, `nopci`, `boot`, `nokey` (#76)
+    - `Device.Status` does not report `authorized-xxx` anymore
+    - `Device.AuthFlags` added to indicate auth details, e.g. `secure`, `nopci`, `boot`, `nokey` (#76)
   - `BoltSecurity` and thus `Manager.SecurityLevel` can report `usbonly` (#75)
 
-* client/boltctl:
+- client/boltctl:
   - async versions for many function calls
   - more efficient getters, resulting in reduced allocations
   - boltctl reports `Device.AuthFlags`
   - boltctl prints more and better version info via `boltctl monitor`
 
-* Other bugfixes and improvements include:
+- Other bugfixes and improvements include:
   - more robust flags/enum conversion
 
+## Version 0.2
 
-Version 0.2
------------
 _I broke the Bus_
 Released: 2018-03-06
 
@@ -294,15 +278,14 @@ Lots of changes, the most significant:
 Other bugfixes and improvements include:
 
 - Ensure we get a `DeviceAdded` signal on startup (#58)
- - Support for legacy devices that have no key sysfs attribute (#67)
- - Use structured logging and avoid printing UUIDs in non-debug log code (#36 #60)
- - Other internal restructuring for cleaner code (#43)
+  - Support for legacy devices that have no key sysfs attribute (#67)
+  - Use structured logging and avoid printing UUIDs in non-debug log code (#36 #60)
+  - Other internal restructuring for cleaner code (#43)
 
+## Version 0.1
 
-Version 0.1
------------
 _Accidentally Working_
 Released: 2017-12-13
 
-* functional daemon that can authorize enroll and authorize devices
-* `boltctl` command to interact with the daemon
+- functional daemon that can authorize enroll and authorize devices
+- `boltctl` command to interact with the daemon
