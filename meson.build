@@ -2,7 +2,7 @@ project('bolt',
   'c',
   version: '0.9.6',
   license : 'LGPL-2.1+',
-  meson_version: '>= 0.46.0',
+  meson_version: '>= 0.56.0',
   default_options: ['warning_level=1',
                     'c_std=gnu99',
                     'buildtype=debugoptimized'])
@@ -91,7 +91,7 @@ a2x     = find_program(['a2x', 'a2x.py'], required: req_man)
 
 prefixdir = get_option('prefix')
 
-srcdir = meson.source_root()
+srcdir = meson.project_source_root()
 bindir = join_paths(prefixdir, get_option('bindir'))
 libexecdir = join_paths(prefixdir, get_option('libexecdir'))
 datadir = join_paths(prefixdir, get_option('datadir'))
@@ -106,12 +106,12 @@ endif
 
 dbname = get_option('db-name')
 dbdir = join_paths(statedir, 'lib', dbname)
-udevdir = udev.get_pkgconfig_variable('udevdir')
+udevdir = udev.get_variable(pkgconfig: 'udevdir')
 
 unitdir = ''
 systemd = dependency('systemd', required: false)
 if systemd.found()
-  unitdir = systemd.get_pkgconfig_variable('systemdsystemunitdir')
+  unitdir = systemd.get_variable(pkgconfig: 'systemdsystemunitdir')
 endif
 
 profiling = get_option('profiling')
@@ -177,7 +177,7 @@ subs.set('libexecdir', libexecdir)
 subs.set('privileged_group', privileged_group)
 subs.set('version', meson.project_version())
 
-longdate = run_command('date', '+%a %b %d %Y').stdout().strip()
+longdate = run_command('date', '+%a %b %d %Y', check: false).stdout().strip()
 subs.set('longdate', longdate)
 
 subs.set('reltag', 'pre1')
@@ -185,10 +185,10 @@ if git.found()
   gitres = run_command(git, ['--git-dir=@0@/.git'.format(srcdir),
                              'rev-parse',
                              '--short=7',
-                             'HEAD'])
+                             'HEAD'], check: false)
   if gitres.returncode() == 0
     gitrev = gitres.stdout().strip()
-    gitdate = run_command('date', '+%Y%m%d').stdout().strip()
+    gitdate = run_command('date', '+%Y%m%d', check: false).stdout().strip()
     # YYYYMMDD<scm><revision>
     subs.set('reltag', '@0@git@1@'.format(gitdate, gitrev))
   endif
@@ -197,7 +197,7 @@ endif
 # git hooks
 
 git_hooks = find_program(join_paths(srcdir, 'scripts', 'git-hooks.sh'))
-res = run_command(git_hooks, 'install')
+res = run_command(git_hooks, 'install', check: false)
 if res.returncode() != 0
   lines = ['git hooks:'] + res.stdout().strip().split('\n')
   message('\n  '.join(lines))
@@ -472,7 +472,7 @@ foreach t: tests
 endforeach
 
 test_it = find_program(join_paths(srcdir, 'tests', 'test-integration'))
-res = run_command(test_it, 'list-tests')
+res = run_command(test_it, 'list-tests', check: false)
 if res.returncode() == 0
   test_env = environment()
   test_env.prepend('LD_PRELOAD', 'libumockdev-preload.so.0')
