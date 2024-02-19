@@ -1,3 +1,12 @@
+## Version 0.9.7
+
+Released: 2024-02-19
+
+- Add a `nopcie` security level since some devices report `nopcie` when Thunderbolt
+  is disabled through BIOS setting.
+
+- Markdown lint styling is used for documents.
+
 ## Version 0.9.6
 
 Released: 2023-09-12
