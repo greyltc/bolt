@@ -29,6 +29,8 @@ The five security levels are:
 - `usbonly`: One PCIe tunnel is created to a usb controller in a
              thunderbolt dock; no other downstream PCIe tunnels are
              authorized (needs 4.17 kernel and recent hardware).
+- `nopcie` : PCIe tunneling is disabled/forbidden from the BIOS.
+             Available in some USB4 systems.
 
 The Linux kernel, starting with version 4.13, provides an interface via
 sysfs that enables userspace query the security level, the status of
