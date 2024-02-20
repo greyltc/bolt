@@ -1,0 +1,64 @@
+_bolt_cmd_list=(
+	'authorize'
+	'config'
+	'domains'
+	'enroll'
+	'forget'
+	'info'
+	'list'
+	'monitor'
+	'power'
+)
+
+_show_device()
+{
+	local devices
+	devices=`boltctl list -a|grep uuid|awk {'print $3'}`
+	COMPREPLY+=( $(compgen -W "${devices[@]}" -- "$cur") )
+}
+
+_show_config()
+{
+	local configs
+	configs=`boltctl config --describe domain|awk {'print $2'}`
+	configs+=`boltctl config --describe global|awk {'print $2'}`
+	COMPREPLY+=( $(compgen -W "${configs[@]}" -- "$cur") )
+}
+
+_boltctl()
+{
+	local cur prev command arg args
+	COMPREPLY=()
+	_get_comp_words_by_ref cur prev
+	_get_first_arg
+	_count_args
+
+	case $prev in
+	-d|--describe)
+		_show_device
+		COMPREPLY+=( $(compgen -W "global domain" -- "$cur") )
+		return 0
+		;;
+	esac
+
+	case $arg in
+	info|enroll|forget|authorize)
+		_show_device
+		;;
+
+	config)
+		COMPREPLY+=( $(compgen -W "--describe" -- "$cur") )
+		_show_config
+		;;
+
+	*)
+		if [[ "$args" = "1" ]]; then
+			COMPREPLY=( $(compgen -W '${_bolt_cmd_list[@]}' -- "$cur") )
+		fi
+		;;
+	esac
+
+	return 0
+}
+
+complete -F _boltctl boltctl
