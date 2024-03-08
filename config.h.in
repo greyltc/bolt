@@ -28,11 +28,7 @@
 #mesondefine VERSION_MINOR
 
 /* directories  */
-#mesondefine DATADIR
-#mesondefine LOCALSTATEDIR
-#mesondefine BOLT_DBNAME
 #mesondefine BOLT_DBDIR
-#mesondefine DATADIR
 
 /* availability of features */
 #mesondefine HAVE_FN_EXPLICIT_BZERO
@@ -51,7 +47,3 @@
 
 /* use structure logging f  */
 #define G_LOG_USE_STRUCTURED 1
-
-/* glib version checking */
-#mesondefine GLIB_VERSION_MIN_REQUIRED
-#mesondefine GLIB_VERSION_MAX_ALLOWED

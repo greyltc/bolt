@@ -96,7 +96,6 @@ bindir = join_paths(prefixdir, get_option('bindir'))
 libexecdir = join_paths(prefixdir, get_option('libexecdir'))
 datadir = join_paths(prefixdir, get_option('datadir'))
 sysconfdir = join_paths(prefixdir, get_option('sysconfdir'))
-statedir = get_option('localstatedir')
 mandir = get_option('mandir')
 testsdir = join_paths(libexecdir, 'installed-tests', 'bolt')
 
@@ -105,7 +104,7 @@ if get_option('db-path') != ''
 endif
 
 dbname = get_option('db-name')
-dbdir = join_paths(statedir, 'lib', dbname)
+dbdir = join_paths(get_option('localstatedir'), 'lib', dbname)
 udevdir = udev.get_variable(pkgconfig: 'udevdir')
 
 unitdir = ''
@@ -132,9 +131,6 @@ conf = configuration_data()
 conf.set_quoted('VERSION', meson.project_version())
 conf.set_quoted('PACKAGE_NAME', meson.project_name())
 conf.set_quoted('PACKAGE_VERSION', meson.project_version())
-conf.set_quoted('DATADIR', datadir)
-conf.set_quoted('LOCALSTATEDIR', statedir)
-conf.set_quoted('BOLT_DBNAME', dbname)
 conf.set_quoted('BOLT_DBDIR', dbdir)
 
 conf.set('VERSION_MAJOR', version_major)
@@ -157,10 +153,6 @@ if polkit.version().version_compare('>= 0.114')
 endif
 
 conf.set('IS_COVERITY_BUILD', get_option('coverity'))
-
-glib_chk = 'GLIB_VERSION_@0@_@1@'.format(glib_min[0], glib_min[1])
-conf.set('GLIB_VERSION_MIN_REQUIRED', glib_chk)
-conf.set('GLIB_VERSION_MAX_ALLOWED', glib_chk)
 
 config_h = configure_file(
   input: 'config.h.in',
@@ -558,7 +550,6 @@ msg = ['',
   'version:             @0@'.format(meson.project_version()),
   'sysconfdir:          @0@'.format(sysconfdir),
   'datadir:             @0@'.format(datadir),
-  'statedir:            @0@'.format(statedir),
   'db name:             @0@'.format(dbname),
   'database path:       @0@'.format(dbdir),
   'privileged group:    @0@'.format(privileged_group),
