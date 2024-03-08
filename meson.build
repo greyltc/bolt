@@ -2,7 +2,7 @@ project('bolt',
   'c',
   version: '0.9.8',
   license : 'LGPL-2.1-or-later',
-  meson_version: '>= 0.56.0',
+  meson_version: '>= 0.60.0',
   default_options: ['warning_level=1',
                     'c_std=gnu99',
                     'buildtype=debugoptimized'])
@@ -546,7 +546,7 @@ if build_man
 
 endif
 
-meson.add_install_script('scripts/meson-install.sh', dbdir)
+install_emptydir(dbdir)
 
 run_target('uncrustify',
            command: 'scripts/uncrustify.sh')
