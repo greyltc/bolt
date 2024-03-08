@@ -538,7 +538,9 @@ if build_man
 
 endif
 
-install_emptydir(dbdir)
+if not systemd.found()
+  install_emptydir(dbdir)
+endif
 
 run_target('uncrustify',
            command: 'scripts/uncrustify.sh')
