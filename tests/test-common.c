@@ -1043,7 +1043,7 @@ test_io_write_file_at (TestIO *tt, gconstpointer user_data)
   g_assert_no_error (error);
   g_assert_nonnull (dir);
 
-  ok = bolt_write_file_at (dirfd (dir), "test.txt", ref, -1, &error);
+  ok = bolt_write_file_at (dirfd (dir), "test.txt", ref, strlen (ref), &error);
 
   g_assert_no_error (error);
   g_assert_true (ok);
@@ -1115,7 +1115,7 @@ test_io_read_int_at (TestIO *tt, gconstpointer user_data)
       gint val = str_to_int_table[i].val;
       gint v;
 
-      ok = bolt_write_file_at (dirfd (dir), "int.txt", txt, -1, &err);
+      ok = bolt_write_file_at (dirfd (dir), "int.txt", txt, strlen (txt), &err);
       g_assert_true (ok);
 
       ok = bolt_read_int_at (dirfd (dir), "int.txt", &v, &err);
@@ -1183,7 +1183,7 @@ test_io_read_uint_at (TestIO *tt, gconstpointer user_data)
       if (g_test_verbose ())
         g_test_message ("bolt_read_uint: '%s'", txt);
 
-      ok = bolt_write_file_at (dirfd (dir), "uint.txt", txt, -1, &err);
+      ok = bolt_write_file_at (dirfd (dir), "uint.txt", txt, strlen (txt), &err);
       g_assert_true (ok);
 
       ok = bolt_read_uint_at (dirfd (dir), "uint.txt", &v, &err);
@@ -1212,7 +1212,7 @@ test_io_file_write_all (TestIO *tt, gconstpointer user_data)
   gsize len;
 
   path = g_build_filename (tt->path, "file_write_all", NULL);
-  ok = bolt_file_write_all (path, ref, -1, &error);
+  ok = bolt_file_write_all (path, ref, strlen (ref), &error);
 
   g_assert_no_error (error);
   g_assert_true (ok);
@@ -1249,7 +1249,7 @@ test_io_renameat (TestIO *tt, gconstpointer user_data)
   g_assert_no_error (err);
   g_assert_nonnull (root);
 
-  ok = bolt_write_file_at (dirfd (root), "a", "a", -1, &err);
+  ok = bolt_write_file_at (dirfd (root), "a", "a", strlen ("a"), &err);
   g_assert_no_error (err);
   g_assert_true (ok);
 
@@ -1406,7 +1406,7 @@ test_io_dir_is_empty (TestIO *tt, gconstpointer user_data)
   g_assert_true (ok);
   g_assert_true (empty);
 
-  ok = bolt_write_file_at (dirfd (root), "a", "a", -1, &err);
+  ok = bolt_write_file_at (dirfd (root), "a", "a", strlen ("a"), &err);
   g_assert_no_error (err);
   g_assert_true (ok);
 
@@ -1421,7 +1421,7 @@ test_io_dir_is_empty (TestIO *tt, gconstpointer user_data)
    * and then making sure we are at the same position
    * after the call to bolt_dir_is_empty */
 
-  ok = bolt_write_file_at (dirfd (root), "b", "b", -1, &err);
+  ok = bolt_write_file_at (dirfd (root), "b", "b", strlen ("a"), &err);
   g_assert_no_error (err);
   g_assert_true (ok);
 

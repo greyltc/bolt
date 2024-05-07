@@ -774,7 +774,7 @@ mock_sysfs_domain_bootacl_set (MockSysfs  *ms,
   data = g_strjoinv (",", acl);
   path = g_build_filename (domain->path, "boot_acl", NULL);
 
-  ok = bolt_file_write_all (path, data, -1, error);
+  ok = bolt_file_write_all (path, data, strlen (data), error);
   if (!ok)
     return FALSE;
 
@@ -807,7 +807,7 @@ mock_syfs_domain_iommu_set (MockSysfs  *ms,
     }
 
   path = g_build_filename (domain->path, BOLT_SYSFS_IOMMU, NULL);
-  ok = bolt_file_write_all (path, val, -1, error);
+  ok = bolt_file_write_all (path, val, strlen (val), error);
   if (!ok)
     return FALSE;
 
