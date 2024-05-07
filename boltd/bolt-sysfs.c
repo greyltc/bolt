@@ -583,7 +583,7 @@ bolt_sysfs_write_boot_acl (const char *device,
   val = g_strjoinv (",", acl);
   path = g_build_filename (device, "boot_acl", NULL);
 
-  return bolt_file_write_all (path, val, -1, error);
+  return bolt_file_write_all (path, val, strlen (val), error);
 }
 
 gboolean

@@ -52,7 +52,7 @@ gboolean   bolt_read_all (int      fd,
 
 gboolean   bolt_write_all (int         fd,
                            const void *buf,
-                           gssize      nbytes,
+                           gsize       nbytes,
                            GError    **error);
 
 gboolean   bolt_ftruncate (int      fd,

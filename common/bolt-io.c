@@ -171,7 +171,7 @@ bolt_read_all (int      fd,
 gboolean
 bolt_write_all (int         fd,
                 const void *buf,
-                gssize      nbytes,
+                gsize       nbytes,
                 GError    **error)
 {
   const char *data = buf;
@@ -180,10 +180,7 @@ bolt_write_all (int         fd,
   g_return_val_if_fail (buf != NULL, FALSE);
   g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-  if (nbytes < 0)
-    nbytes = strlen (data);
-
-  do
+  while (nbytes > 0)
     {
 
       ssize_t n;
@@ -215,7 +212,6 @@ bolt_write_all (int         fd,
       nbytes -= n;
 
     }
-  while (nbytes > 0);
 
   return ok;
 }
