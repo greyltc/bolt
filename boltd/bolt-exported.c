@@ -680,6 +680,7 @@ handle_dbus_method_call (GDBusConnection       *connection,
   if (err != NULL)
     {
       //bolt_warn_err (err, LOG_TOPIC ("dbus"), "error dispatching call");
+      g_slice_free (DispatchData, data);
       g_dbus_method_invocation_return_gerror (invocation, err);
       return;
     }
