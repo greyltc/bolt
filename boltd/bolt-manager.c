@@ -1316,6 +1316,7 @@ bolt_manager_label_device (BoltManager *mgr,
   const char *name;
   const char *vendor;
   guint count = 0;
+
   static struct
   {
     const char *from;
