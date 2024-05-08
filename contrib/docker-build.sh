@@ -39,5 +39,5 @@ if [[ -x $(command -v pylint) ]]; then
 fi
 
 if [[ -x $(command -v codespell) ]]; then
-    codespell -S .git -S build
+    codespell --config contrib/codespell.cfg
 fi
