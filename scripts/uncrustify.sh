@@ -14,7 +14,7 @@ case "$1" in
 esac
 
 pushd "$SRCROOT"
-uncrustify -c "$CFG" $OPTS `git ls-tree --name-only -r HEAD | grep \\\.[ch]$ | grep -v gvdb | grep -v build/`
+uncrustify -c "$CFG" $OPTS `git ls-tree --name-only -r HEAD | grep \\\.[c]$ | grep -v gvdb | grep -v build/`
 RES=$?
 popd
 exit $RES
