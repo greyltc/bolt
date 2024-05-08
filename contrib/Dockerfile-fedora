@@ -1,5 +1,5 @@
 ## -*- mode: dockerfile -*-
-FROM fedora:34
+FROM fedora:latest
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
@@ -7,6 +7,7 @@ RUN dnf --enablerepo=updates-testing -y update
 RUN dnf --enablerepo=updates-testing -y install \
     clang-analyzer \
     codespell \
+    cmake \
     gcc \
     git \
     glib2-devel \
@@ -14,7 +15,7 @@ RUN dnf --enablerepo=updates-testing -y install \
     gtk-doc \
     lcov \
     libgudev-devel \
-    meson-0.56.2-2.fc34 \
+    meson \
     polkit-devel \
     python3 \
     python3-dbus \
@@ -22,6 +23,7 @@ RUN dnf --enablerepo=updates-testing -y install \
     python3-gobject \
     rpm-build \
     redhat-rpm-config \
+    systemd-udev \
     systemd-devel \
     umockdev-devel \
     uncrustify
