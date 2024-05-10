@@ -1,5 +1,5 @@
 ## -*- mode: dockerfile -*-
-FROM debian:sid
+FROM debian:latest
 RUN apt-get update -q && apt-get install -y \
     asciidoc \
     git \

@@ -1,5 +1,5 @@
 ## -*- mode: dockerfile -*-
-FROM fedora:34
+FROM fedora:latest
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
@@ -15,7 +15,7 @@ RUN dnf --enablerepo=updates-testing -y install \
     gtk-doc \
     lcov \
     libgudev-devel \
-    meson-0.56.2-2.fc34 \
+    meson \
     polkit-devel \
     python3 \
     python3-dbus \
@@ -23,6 +23,7 @@ RUN dnf --enablerepo=updates-testing -y install \
     python3-gobject \
     rpm-build \
     redhat-rpm-config \
+    systemd-udev \
     systemd-devel \
     umockdev-devel \
     uncrustify \
@@ -30,13 +31,12 @@ RUN dnf --enablerepo=updates-testing -y install \
 
 ARG TOKEN
 ARG PROJECT
-ARG ORG
 
 ENV HOME "/root"
 
 WORKDIR "$HOME"
 RUN curl https://scan.coverity.com/download/linux64 \
-    --form project=${ORG}/${PROJECT} \
+    --form project=${PROJECT} \
     --form token=${TOKEN} \
     -o coverity_tool.tgz && \
     tar zxf coverity_tool.tgz \
