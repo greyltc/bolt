@@ -31,5 +31,5 @@ if [[ -v COVERITY_TOKEN && -v COVERITY_EMAIL ]]; then
 	 --form "file=@/build/coverity.xz" \
 	 --form "version=main" \
 	 --form "description=${GIT_DESC}" \
-	 https://scan.coverity.com/builds?project=gicmo%2Fbolt
+	 https://scan.coverity.com/builds?project=smallorange-bolt
 fi
