@@ -1,3 +1,13 @@
+## Version 0.9.8
+
+Released: 2024-05-16
+
+- A new NHI for REMBRANDT. [!278]
+- CI fixes.
+- Don't install an empty DB directory. [!277]
+- Fixed: Determine the string length before writing file. [!279]
+- Fixed: Free on error to prevent resource leak. [!281]
+
 ## Version 0.9.7
 
 Released: 2024-02-19
