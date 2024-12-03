@@ -125,7 +125,7 @@ bolt_uuid_format_from_string (const char *str,
 int uuids_format;
 GHashTable *uuids_table;
 gboolean uuids_cleanup;
-char *uuids_salt;
+gchar *uuids_salt;
 
 static void
 format_uid_cleanup (void)
@@ -138,10 +138,10 @@ format_uid_cleanup (void)
 #define MACHINE_ID_PATH "/etc/machine-id"
 #define BOOT_ID_PATH "/proc/sys/kernel/random/boot_id"
 
-static char *
+static gchar *
 get_salt (void)
 {
-  char *salt = NULL;
+  g_autofree gchar *salt = NULL;
   gboolean ok;
 
   ok = g_file_get_contents (MACHINE_ID_PATH, &salt, NULL, NULL);
@@ -156,7 +156,7 @@ get_salt (void)
   if (ok && !bolt_strzero (salt))
     {
       g_debug ("using boot-id as salt");
-      return salt;
+      return g_strdup (salt);
     }
 
   g_debug ("using PACKAGE_VERSION as pseudo-salt :(");
