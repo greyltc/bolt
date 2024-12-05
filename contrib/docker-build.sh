@@ -22,6 +22,7 @@ if [[ -x "$(command -v lcov)" ]]; then
 fi
 
 if [[ -x "$(command -v scan-build)" ]]; then
+    export SCANBUILD=/src/contrib/scan-build.sh
     ninja -C /build scan-build
 
     if [[ -n "$(ls -A /build/meson-logs/scanbuild/)" ]]; then
