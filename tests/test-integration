@@ -2341,7 +2341,7 @@ class BoltTest(dbusmock.DBusTestCase):
         devices = self.client.list_peripherals()
         tries = 0
         while expected_number != len(devices) and tries < 3:
-            time.sleep(.2)
+            time.sleep(2)
             tries += 1
             devices = self.client.list_peripherals()
         self.assertEqual(len(devices), expected_number)
@@ -2534,7 +2534,7 @@ class BoltTest(dbusmock.DBusTestCase):
         devices = self.client.list_peripherals()
         tries = 0
         while expected_number != len(devices) and tries < 3:
-            time.sleep(.2)
+            time.sleep(2)
             tries += 1
             devices = self.client.list_peripherals()
         self.assertEqual(len(devices), expected_number)
