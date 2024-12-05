@@ -6,6 +6,7 @@ RUN pacman -Syu --noconfirm
 RUN pacman -S --noconfirm base-devel
 RUN pacman -S --noconfirm \
     asciidoc \
+    glib2-devel \
     dbus-glib \
     git \
     gobject-introspection \
