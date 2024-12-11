@@ -2,7 +2,7 @@
 
 specfile_path: bolt.spec
 
-synced_files:
+files_to_sync:
     - bolt.spec
     - .packit.yaml
 
