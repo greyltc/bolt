@@ -128,7 +128,7 @@ notify_socket_new (void)
     + strlen (sau.sun_path)
     + 1;
 
-  r = bind (fd, &sau, socklen);
+  r = bind (fd, (struct sockaddr *) &sau, socklen);
   g_assert_cmpint (r, >, -1);
 
   r = setsockopt (fd, SOL_SOCKET, SO_PASSCRED, &one, sizeof (one));
