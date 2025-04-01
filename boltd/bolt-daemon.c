@@ -138,10 +138,8 @@ on_bus_acquired (GDBusConnection *connection,
                             NULL);
 
   if (manager == NULL)
-    {
-      bolt_error (LOG_ERR (error), "could not create manager");
-      exit (EXIT_FAILURE);
-    }
+    bolt_error (LOG_ERR (error), "could not create manager");
+
 
   if (!bolt_manager_export (manager, connection, &error))
     bolt_warn_err (error, LOG_TOPIC ("dbus"), "error exporting the manager");
