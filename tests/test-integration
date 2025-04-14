@@ -695,6 +695,7 @@ class Device:
     def disconnect(self, bed):
         print("disconnecting " + self.name, file=sys.stderr)
         for c in self.children:
+            time.sleep(0.5)
             c.disconnect(bed)
         bed.uevent(self.syspath, "remove")
         bed.remove_device(self.syspath)
