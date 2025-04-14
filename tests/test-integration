@@ -46,7 +46,8 @@ try:
     import gi
     from gi.repository import GLib
     from gi.repository import Gio
-    gi.require_version('UMockdev', '1.0')
+
+    gi.require_version("UMockdev", "1.0")
     from gi.repository import UMockdev
 
     import dbus
@@ -54,35 +55,31 @@ try:
 
     import configparser
 except ImportError as e:
-    sys.stderr.write('Skipping integration test due to missing dependencies: %s\n' % str(e))
+    sys.stderr.write(
+        "Skipping integration test due to missing dependencies: %s\n" % str(e)
+    )
     sys.exit(1)
 
 
-DBUS_NAME = 'org.freedesktop.bolt'
-DBUS_PATH = '/org/freedesktop/bolt'
-DBUS_IFACE_PREFIX = 'org.freedesktop.bolt1.'
-DBUS_IFACE_MANAGER = DBUS_IFACE_PREFIX + 'Manager'
-DBUS_IFACE_DEVICE = DBUS_IFACE_PREFIX + 'Device'
-DBUS_IFACE_DOMAIN = DBUS_IFACE_PREFIX + 'Domain'
-SERVICE_FILE = '/usr/share/dbus-1/system-services/org.freedesktop.bolt.service'
+DBUS_NAME = "org.freedesktop.bolt"
+DBUS_PATH = "/org/freedesktop/bolt"
+DBUS_IFACE_PREFIX = "org.freedesktop.bolt1."
+DBUS_IFACE_MANAGER = DBUS_IFACE_PREFIX + "Manager"
+DBUS_IFACE_DEVICE = DBUS_IFACE_PREFIX + "Device"
+DBUS_IFACE_DOMAIN = DBUS_IFACE_PREFIX + "Domain"
+SERVICE_FILE = "/usr/share/dbus-1/system-services/org.freedesktop.bolt.service"
 
 
-def get_timeout(topic='default'):
+def get_timeout(topic="default"):
     vals = {
-        'valgrind': {
-            'default': 20,
-            'daemon_start': 60
-        },
-        'default': {
-            'default': 3,
-            'daemon_start': 5
-        }
+        "valgrind": {"default": 20, "daemon_start": 60},
+        "default": {"default": 3, "daemon_start": 5},
     }
 
-    valgrind = os.getenv('VALGRIND')
-    lut = vals['valgrind' if valgrind is not None else 'default']
+    valgrind = os.getenv("VALGRIND")
+    lut = vals["valgrind" if valgrind is not None else "default"]
     if topic not in lut:
-        raise ValueError('invalid topic')
+        raise ValueError("invalid topic")
     return lut[topic]
 
 
@@ -128,11 +125,10 @@ class Signal:
 
     def bridge(self, obj, name, callback):
         if self._bridge is not None:
-            raise ValueError('already bridged')
-        self._bridge = {'object': obj,
-                        'name': name}
+            raise ValueError("already bridged")
+        self._bridge = {"object": obj, "name": name}
         if callback is not None:
-            self._bridge['filter'] = callback
+            self._bridge["filter"] = callback
 
     def birdge_destroy(self):
         self._bridge = None
@@ -141,19 +137,19 @@ class Signal:
         if self._bridge is None:
             return
         b = self._bridge
-        signal_id = b['object'].connect(b['name'], self._bridge_signal)
-        b['signal_id'] = signal_id
+        signal_id = b["object"].connect(b["name"], self._bridge_signal)
+        b["signal_id"] = signal_id
 
     def _bridge_destory(self):
         if self._bridge is None:
             return
         b = self._bridge
-        b['object'].disconnect(b['signal_id'])
-        del b['signal_id']
+        b["object"].disconnect(b["signal_id"])
+        del b["signal_id"]
 
     def _bridge_signal(self, *args, **kwargs):
-        if 'filter' in self._bridge:
-            res, args, kwargs = self._bridge['filter'](args, kwargs)
+        if "filter" in self._bridge:
+            res, args, kwargs = self._bridge["filter"](args, kwargs)
             if not res:
                 return False
         return self.emit(*args, **kwargs)
@@ -171,8 +167,8 @@ class Signal:
 
     @staticmethod
     def enable(klass):
-        lst = getattr(klass, 'signals', [])
-        methods = [m for m in dir(klass) if not m.startswith('__')]
+        lst = getattr(klass, "signals", [])
+        methods = [m for m in dir(klass) if not m.startswith("__")]
 
         def install(l):
             if l is None:
@@ -181,10 +177,10 @@ class Signal:
                 print('WARNING: signal "%s" will overwrite method' % l, file=sys.stderr)
 
             def get_signals(self):
-                signals = getattr(self, '__signals', None)
+                signals = getattr(self, "__signals", None)
                 if signals is None:
                     signals = {}
-                    setattr(self, '__signals', signals)
+                    setattr(self, "__signals", signals)
                 return signals
 
             def get_signal(self):
@@ -204,17 +200,17 @@ class Signal:
             return l
 
         bases = klass.__bases__
-        ps = {s for b in bases for s in getattr(b, 'signals', [])}
+        ps = {s for b in bases for s in getattr(b, "signals", [])}
         klass.signals = list(ps.union({install(l) for l in lst}))
         return klass
 
 
 class Recorder:
-    Event = namedtuple('Event', ['what', 'name', 'details', 'time'])
+    Event = namedtuple("Event", ["what", "name", "details", "time"])
 
     def __init__(self, target):
         self.recording = True
-        self.event = Signal('event')
+        self.event = Signal("event")
         self.events = []
         self.target = target
         self.target.g_properties_changed += self._on_props_changed
@@ -237,12 +233,12 @@ class Recorder:
     def _on_props_changed(self, props):
         now = time.time()
         for k, v in props.items():
-            event = self.Event('property', k, v, now)
+            event = self.Event("property", k, v, now)
             self._add_event(event)
 
     def _on_signal(self, _proxy, _sender, signal, params):
         now = time.time()
-        event = self.Event('signal', signal, params, now)
+        event = self.Event("signal", signal, params, now)
         self._add_event(event)
 
     def _add_event(self, event):
@@ -284,8 +280,11 @@ class Recorder:
                 loop.quit()
 
         def got_timeout():
-            print('WARNING: timeout reached! Want: %s, Have: %s' %
-                  (str(lst), str(self.events)), file=sys.stderr)
+            print(
+                "WARNING: timeout reached! Want: %s, Have: %s"
+                % (str(lst), str(self.events)),
+                file=sys.stderr,
+            )
             loop.quit()
 
         # check if we did receive the events already
@@ -295,7 +294,7 @@ class Recorder:
 
         self.event += got_event
         timeout = timeout or get_timeout()
-        GLib.timeout_add(timeout*1000, got_timeout)
+        GLib.timeout_add(timeout * 1000, got_timeout)
         loop.run()
         self.event -= got_event
         return len(lst) == 0
@@ -305,38 +304,43 @@ class Recorder:
         return self.wait_for_events([event])
 
     def wait_for_props(self, **kwargs):
-        events = [self.Event('property', name, details, None) for name, details in kwargs.items()]
+        events = [
+            self.Event("property", name, details, None)
+            for name, details in kwargs.items()
+        ]
         res = self.wait_for_events(events)
         assert res
 
 
 @Signal.enable
 class ProxyWrapper:
-    signals = ['g_properties_changed', 'g_signal']
+    signals = ["g_properties_changed", "g_signal"]
 
     def __init__(self, bus, iname, path):
-        self._proxy = Gio.DBusProxy.new_sync(bus,
-                                             Gio.DBusProxyFlags.DO_NOT_AUTO_START,
-                                             None,
-                                             DBUS_NAME,
-                                             path,
-                                             iname,
-                                             None)
+        self._proxy = Gio.DBusProxy.new_sync(
+            bus,
+            Gio.DBusProxyFlags.DO_NOT_AUTO_START,
+            None,
+            DBUS_NAME,
+            path,
+            iname,
+            None,
+        )
 
         def props_changed(args, _kwargs):
             return True, [args[1].unpack()], {}
 
-        self.g_properties_changed.bridge(self._proxy,
-                                         'g-properties-changed',
-                                         props_changed)
+        self.g_properties_changed.bridge(
+            self._proxy, "g-properties-changed", props_changed
+        )
 
-        self.g_signal.bridge(self._proxy, 'g-signal', None)
+        self.g_signal.bridge(self._proxy, "g-signal", None)
 
     def __getattr__(self, name):
-        if name.startswith('_'):
+        if name.startswith("_"):
             raise AttributeError
-        if '_' in name:
-            c = name.split('_')
+        if "_" in name:
+            c = name.split("_")
             name = "".join(x.title() for x in c)
         else:
             name = name[0].upper() + name[1:]
@@ -374,23 +378,19 @@ class BoltDevice(ProxyWrapper):
     NOKEY = 1 << 2
     BOOT = 1 << 3
 
-    HOST = 'host'
-    PERIPHERAL = 'peripheral'
+    HOST = "host"
+    PERIPHERAL = "peripheral"
 
     def __init__(self, bus, path):
-        super(BoltDevice, self).__init__(bus,
-                                         DBUS_IFACE_DEVICE,
-                                         path)
+        super(BoltDevice, self).__init__(bus, DBUS_IFACE_DEVICE, path)
 
     def _set_property(self, name, value):
         if isinstance(value, str):
             value = GLib.Variant("s", value)
         target = GLib.Variant("(ssv)", (DBUS_IFACE_DEVICE, name, value))
-        res = self._proxy.call_sync('org.freedesktop.DBus.Properties.Set',
-                                    target,
-                                    0,
-                                    -1,
-                                    None)
+        res = self._proxy.call_sync(
+            "org.freedesktop.DBus.Properties.Set", target, 0, -1, None
+        )
         return res is not None
 
     @property
@@ -402,71 +402,77 @@ class BoltDevice(ProxyWrapper):
         return self.status >= self.AUTHORIZED
 
     def authorize(self, flags=""):
-        self.Authorize('(s)', flags)
+        self.Authorize("(s)", flags)
         return True
 
     @property
     def status(self):
-        res = getattr(self, 'Status')
-        mapping = {'unknown': self.UNKNOWN,
-                   'disconnected': self.DISCONNECTED,
-                   'connecting': self.CONNECTING,
-                   'connected': self.CONNECTED,
-                   'authorizing': self.AUTHORIZING,
-                   'auth-error': self.AUTH_ERROR,
-                   'authorized': self.AUTHORIZED}
+        res = getattr(self, "Status")
+        mapping = {
+            "unknown": self.UNKNOWN,
+            "disconnected": self.DISCONNECTED,
+            "connecting": self.CONNECTING,
+            "connected": self.CONNECTED,
+            "authorizing": self.AUTHORIZING,
+            "auth-error": self.AUTH_ERROR,
+            "authorized": self.AUTHORIZED,
+        }
 
         return mapping.get(res, self.UNKNOWN)
 
     @property
     def authflags(self):
-        res = getattr(self, 'AuthFlags')
-        mapping = {'none': 0,
-                   'nopcie': self.NOPCIE,
-                   'secure': self.SECURE,
-                   'nokey': self.NOKEY,
-                   'boot': self.BOOT}
+        res = getattr(self, "AuthFlags")
+        mapping = {
+            "none": 0,
+            "nopcie": self.NOPCIE,
+            "secure": self.SECURE,
+            "nokey": self.NOKEY,
+            "boot": self.BOOT,
+        }
 
         print(res, file=sys.stderr)
-        keys = [x.strip() for x in res.split('|')]
+        keys = [x.strip() for x in res.split("|")]
         return reduce(lambda r, x: r | mapping.get(x, 0), keys, 0)
 
     @property
     def device_type(self):
-        return getattr(self, 'type')
+        return getattr(self, "type")
 
     @property
     def key(self):
-        res = getattr(self, 'Key')
-        mapping = {'missing': self.KEY_MISSING,
-                   'have': self.KEY_HAVE,
-                   'new': self.KEY_NEW}
+        res = getattr(self, "Key")
+        mapping = {
+            "missing": self.KEY_MISSING,
+            "have": self.KEY_HAVE,
+            "new": self.KEY_NEW,
+        }
 
         return mapping.get(res, self.MISSING)
 
     @property
     def label(self):
-        res = getattr(self, 'Label')
+        res = getattr(self, "Label")
         if not res:
             return None
         return res
 
     @label.setter
     def label(self, value):
-        return self._set_property('Label', value)
+        return self._set_property("Label", value)
 
     @property
     def policy(self):
-        res = getattr(self, 'Policy')
+        res = getattr(self, "Policy")
         return res if res else None
 
     @policy.setter
     def policy(self, value):
-        return self._set_property('Policy', value)
+        return self._set_property("Policy", value)
 
     @property
     def linkspeed(self):
-        res = getattr(self, 'LinkSpeed')
+        res = getattr(self, "LinkSpeed")
         if not res:
             return None
         return res
@@ -478,26 +484,24 @@ class BoltDevice(ProxyWrapper):
 
 
 class BoltDomain(ProxyWrapper):
-    SECURITY_NONE = 'none'
-    SECURITY_USER = 'user'
-    SECURITY_SECURE = 'secure'
-    SECURITY_DPONLY = 'dponly'
-    SECURITY_USBONLY = 'usbonly'
-    SECURITY_NOPCIE = 'nopcie'
+    SECURITY_NONE = "none"
+    SECURITY_USER = "user"
+    SECURITY_SECURE = "secure"
+    SECURITY_DPONLY = "dponly"
+    SECURITY_USBONLY = "usbonly"
+    SECURITY_NOPCIE = "nopcie"
 
     @classmethod
     def security_levels(cls):
         v = vars(cls)
-        return [v[k] for k in v.keys() if k.startswith('SECURITY_')]
+        return [v[k] for k in v.keys() if k.startswith("SECURITY_")]
 
     def __init__(self, bus, path):
-        super(BoltDomain, self).__init__(bus,
-                                         DBUS_IFACE_DOMAIN,
-                                         path)
+        super(BoltDomain, self).__init__(bus, DBUS_IFACE_DOMAIN, path)
 
     @property
     def bootacl(self):
-        res = getattr(self, 'BootACL')
+        res = getattr(self, "BootACL")
         if not res:
             return None
         return res
@@ -506,44 +510,41 @@ class BoltDomain(ProxyWrapper):
     def bootacl(self, value):
         value = GLib.Variant("as", value)
 
-        self._proxy.call_sync('org.freedesktop.DBus.Properties.Set',
-                              GLib.Variant("(ssv)",
-                                           (DBUS_IFACE_DOMAIN,
-                                            "BootACL",
-                                            value)),
-                              0,
-                              -1,
-                              None)
+        self._proxy.call_sync(
+            "org.freedesktop.DBus.Properties.Set",
+            GLib.Variant("(ssv)", (DBUS_IFACE_DOMAIN, "BootACL", value)),
+            0,
+            -1,
+            None,
+        )
 
 
 @Signal.enable
 class BoltClient(ProxyWrapper):
-    signals = ['device_added', 'device_removed']
+    signals = ["device_added", "device_removed"]
 
-    POLICY_DEFAULT = 'default'
-    POLICY_MANUAL = 'manual'
-    POLICY_AUTO = 'auto'
-    POLICY_IOMMU = 'iommu'
+    POLICY_DEFAULT = "default"
+    POLICY_MANUAL = "manual"
+    POLICY_AUTO = "auto"
+    POLICY_IOMMU = "iommu"
 
     def __init__(self, bus):
-        super(BoltClient, self).__init__(bus,
-                                         DBUS_IFACE_MANAGER,
-                                         DBUS_PATH)
-        self._proxy.connect('g-signal', self._on_dbus_signal)
+        super(BoltClient, self).__init__(bus, DBUS_IFACE_MANAGER, DBUS_PATH)
+        self._proxy.connect("g-signal", self._on_dbus_signal)
 
     def _on_dbus_signal(self, _proxy, _sender, signal, params):
         bus = self._proxy.get_connection()
-        if signal == 'DeviceAdded':
+        if signal == "DeviceAdded":
             self.device_added.emit(BoltDevice(bus, params[0]))
             return True
-        if signal == 'DeviceRemoved':
+        if signal == "DeviceRemoved":
             self.device_removed.emit(params[0])
             return True
         return False
 
     @property
     def auth_mode(self):
-        res = getattr(self, 'AuthMode')
+        res = getattr(self, "AuthMode")
         if not res:
             return None
         return res
@@ -553,14 +554,13 @@ class BoltClient(ProxyWrapper):
         if isinstance(value, str):
             value = GLib.Variant("s", value)
 
-        self._proxy.call_sync('org.freedesktop.DBus.Properties.Set',
-                              GLib.Variant("(ssv)",
-                                           (DBUS_IFACE_MANAGER,
-                                            "AuthMode",
-                                            value)),
-                              0,
-                              -1,
-                              None)
+        self._proxy.call_sync(
+            "org.freedesktop.DBus.Properties.Set",
+            GLib.Variant("(ssv)", (DBUS_IFACE_MANAGER, "AuthMode", value)),
+            0,
+            -1,
+            None,
+        )
 
     def list_domains(self):
         domains = self.ListDomains()
@@ -609,14 +609,14 @@ class BoltClient(ProxyWrapper):
     def gen_object_path(base, object_id):
         oid = None
         if object_id:
-            oid = object_id.replace('-', '_')
+            oid = object_id.replace("-", "_")
         if base and oid:
-            return os.path.join('/', base, oid)
+            return os.path.join("/", base, oid)
         if base:
-            return os.path.join('/', base)
+            return os.path.join("/", base)
         if oid:
-            return os.path.join('/', oid)
-        return '/'
+            return os.path.join("/", oid)
+        return "/"
 
 
 # Mock Device Tree
@@ -626,8 +626,7 @@ class Device:
     udev_attrs = []
     udev_props = []
 
-    signals = ['device_connected',
-               'device_disconnected']
+    signals = ["device_connected", "device_disconnected"]
 
     def __init__(self, name, children):
         self._parent = None
@@ -644,6 +643,7 @@ class Device:
         def get_pair(a):
             v = getattr(self, a.lower())
             return [a, str(v) if v is not None else v]
+
         x = [get_pair(a) for a in items]
         i = chain.from_iterable(filter(lambda x: x[1] is not None, x))
         return list(i)
@@ -681,21 +681,19 @@ class Device:
             c.connect_tree(bed)
 
     def connect(self, bed):
-        print('connecting ' + self.name, file=sys.stderr)
+        print("connecting " + self.name, file=sys.stderr)
         assert self.syspath is None
         attributes = self._get_own(self.udev_attrs)
         properties = self._get_own(self.udev_props)
         sysparent = self.parent and self.parent.syspath
-        self.syspath = bed.add_device(self.subsystem,
-                                      self.name,
-                                      sysparent,
-                                      attributes,
-                                      properties)
+        self.syspath = bed.add_device(
+            self.subsystem, self.name, sysparent, attributes, properties
+        )
         self.root.device_connected(self)
         self.testbed = bed
 
     def disconnect(self, bed):
-        print('disconnecting ' + self.name, file=sys.stderr)
+        print("disconnecting " + self.name, file=sys.stderr)
         for c in self.children:
             c.disconnect(bed)
         bed.uevent(self.syspath, "remove")
@@ -707,48 +705,57 @@ class Device:
 
 class TbNativeHostInterface(Device):
     subsystem = "pci"
-    udev_attrs = ['class',
-                  'device',
-                  'vendor']
+    udev_attrs = ["class", "device", "vendor"]
 
-    udev_props = ['DRIVER']
+    udev_props = ["DRIVER"]
 
     driver = "thunderbolt"
 
-    def __init__(self, domain, pci_id=0x15d2):
+    def __init__(self, domain, pci_id=0x15D2):
         assert domain
         name = "pci0000:00:0d.%d" % domain.index
         super().__init__(name, [domain])
-        setattr(self, 'class', '0x088000')
-        self.vendor = '0x8086'
-        self.device = '0x%04x' % pci_id
+        setattr(self, "class", "0x088000")
+        self.vendor = "0x8086"
+        self.device = "0x%04x" % pci_id
 
 
 class TbDevice(Device):
     subsystem = "thunderbolt"
     devtype = "thunderbolt_device"
 
-    udev_attrs = ['authorized',
-                  'device',
-                  'device_name',
-                  'generation',
-                  'key',
-                  'unique_id',
-                  'vendor',
-                  'vendor_name',
-                  'rx_lanes',
-                  'rx_speed',
-                  'tx_lanes',
-                  'tx_speed']
+    udev_attrs = [
+        "authorized",
+        "device",
+        "device_name",
+        "generation",
+        "key",
+        "unique_id",
+        "vendor",
+        "vendor_name",
+        "rx_lanes",
+        "rx_speed",
+        "tx_lanes",
+        "tx_speed",
+    ]
 
-    udev_props = ['DEVTYPE']
+    udev_props = ["DEVTYPE"]
 
-    def __init__(self, name, authorized=0, vendor=None, uid=None, children=None, key='\n', gen=None):
+    def __init__(
+        self,
+        name,
+        authorized=0,
+        vendor=None,
+        uid=None,
+        children=None,
+        key="\n",
+        gen=None,
+    ):
         super(TbDevice, self).__init__(name, children or [])
         self.unique_id = uid or str(uuid.uuid4())
-        self.device_name = 'Thunderbolt ' + name
+        self.device_name = "Thunderbolt " + name
         self.device = self._make_id(self.device_name)
-        self.vendor_name = vendor or 'GNOME.org'
+        self.vendor_name = vendor or "GNOME.org"
         self.vendor = self._make_id(self.vendor_name)
         self.authorized = authorized
         self.key = key
@@ -766,19 +773,19 @@ class TbDevice(Device):
 
     @staticmethod
     def _make_id(name):
-        return '0x%X' % binascii.crc32(name.encode('utf-8'))
+        return "0x%X" % binascii.crc32(name.encode("utf-8"))
 
     @property
     def authorized_file(self):
         if self.syspath is None:
             return None
-        return os.path.join(self.syspath, 'authorized')
+        return os.path.join(self.syspath, "authorized")
 
     @property
     def key_file(self):
         if self.syspath is None:
             return None
-        return os.path.join(self.syspath, 'key')
+        return os.path.join(self.syspath, "key")
 
     @property
     def bolt_status(self):
@@ -802,9 +809,11 @@ class TbDevice(Device):
         if self.domain.security == TbDomain.SECURITY_SECURE:
             if self.key is None:
                 flags |= BoltDevice.NOKEY
-        elif self.domain.security in [TbDomain.SECURITY_DPONLY,
-                                      TbDomain.SECURITY_USBONLY,
-                                      TbDomain.SECURITY_NOPCIE]:
+        elif self.domain.security in [
+            TbDomain.SECURITY_DPONLY,
+            TbDomain.SECURITY_USBONLY,
+            TbDomain.SECURITY_NOPCIE,
+        ]:
             flags |= BoltDevice.NOPCIE
 
         return flags
@@ -837,37 +846,34 @@ class TbDevice(Device):
             self.testbed.set_attribute(self.syspath, "rx_speed", self.rx_speed)
             self.testbed.set_attribute(self.syspath, "tx_lanes", self.tx_lanes)
             self.testbed.set_attribute(self.syspath, "tx_speed", self.tx_speed)
-            self.testbed.uevent(self.syspath, 'change')
+            self.testbed.uevent(self.syspath, "change")
 
     def reload_auth(self):
         authorized = self.authorized
         key = self.key
         f = self.authorized_file
-        with open(self.authorized_file, 'r') as f:
+        with open(self.authorized_file, "r") as f:
             data = f.read()
             self.authorized = int(data)
-        with open(os.path.join(self.syspath, 'key'), 'r') as f:
+        with open(os.path.join(self.syspath, "key"), "r") as f:
             self.key = f.read().strip()
         if self.authorized != authorized or self.key != key:
             if self.syspath:
-                self.testbed.uevent(self.syspath, 'change')
+                self.testbed.uevent(self.syspath, "change")
 
     def authorize(self, level):
-        with open(self.authorized_file, 'w') as f:
+        with open(self.authorized_file, "w") as f:
             f.write(level)
         self.reload_auth()
 
     def writekey(self, key):
-        with open(self.key_file, 'w') as f:
+        with open(self.key_file, "w") as f:
             f.write(key)
 
 
 class TbHost(TbDevice):
-    def __init__(self, children, name='Laptop', gen=None):
-        super(TbHost, self).__init__(name,
-                                     authorized=1,
-                                     gen=gen,
-                                     children=children)
+    def __init__(self, children, name="Laptop", gen=None):
+        super(TbHost, self).__init__(name, authorized=1, gen=gen, children=children)
 
     def connect(self, bed):
         self.authorized = 1
@@ -878,25 +884,27 @@ class TbDomain(Device):
     subsystem = "thunderbolt"
     devtype = "thunderbolt_domain"
 
-    udev_attrs = ['security', 'boot_acl', 'iommu_dma_protection']
-    udev_props = ['DEVTYPE']
+    udev_attrs = ["security", "boot_acl", "iommu_dma_protection"]
+    udev_props = ["DEVTYPE"]
 
-    SECURITY_NONE = 'none'
-    SECURITY_USER = 'user'
-    SECURITY_SECURE = 'secure'
-    SECURITY_DPONLY = 'dponly'
-    SECURITY_USBONLY = 'usbonly'
-    SECURITY_NOPCIE = 'nopcie'
+    SECURITY_NONE = "none"
+    SECURITY_USER = "user"
+    SECURITY_SECURE = "secure"
+    SECURITY_DPONLY = "dponly"
+    SECURITY_USBONLY = "usbonly"
+    SECURITY_NOPCIE = "nopcie"
 
-    def __init__(self, security=SECURITY_SECURE, index=0, host=None, acl=None, iommu=None):
+    def __init__(
+        self, security=SECURITY_SECURE, index=0, host=None, acl=None, iommu=None
+    ):
         assert host
         assert isinstance(host, TbHost)
-        name = 'domain%d' % index
+        name = "domain%d" % index
         if host.unique_id is None:
-            host.unique_id = '3b7d4bad-4fdf-44ff-8730-ffffdeadbab%d' % index
+            host.unique_id = "3b7d4bad-4fdf-44ff-8730-ffffdeadbab%d" % index
         super(TbDomain, self).__init__(name, children=[host])
         self.security = security
-        self.boot_acl = ','*(acl-1) if isinstance(acl, int) else acl
+        self.boot_acl = "," * (acl - 1) if isinstance(acl, int) else acl
         self.iommu_dma_protection = iommu
         self.index = index
 
@@ -927,7 +935,9 @@ class TbDomain(Device):
 
     @property
     def peripherals(self):
-        return self.collect(lambda c: isinstance(c, TbDevice) and not isinstance(c, TbHost))
+        return self.collect(
+            lambda c: isinstance(c, TbDevice) and not isinstance(c, TbHost)
+        )
 
     @property
     def domain(self):
@@ -955,17 +965,18 @@ class Parameterize:
 
     @staticmethod
     def _make_test(klass, name, func):
-        params = getattr(func, '__expand')
+        params = getattr(func, "__expand")
 
         def test_function(self):
             func(self, **params)
-        suffix = '_' + '_'.join(params.keys())
+
+        suffix = "_" + "_".join(params.keys())
         setattr(klass, name + suffix, test_function)
 
     @staticmethod
     def enable(klass):
-        tests = [(m, getattr(klass, m)) for m in dir(klass) if m.startswith('test_')]
-        expandable = filter(lambda f: hasattr(f[1], '__expand'), tests)
+        tests = [(m, getattr(klass, m)) for m in dir(klass) if m.startswith("test_")]
+        expandable = filter(lambda f: hasattr(f[1], "__expand"), tests)
         for t in expandable:
             Parameterize._make_test(klass, t[0], t[1])
         map(lambda t: Parameterize._make_test(klass, t[0], t[1]), expandable)
@@ -974,18 +985,19 @@ class Parameterize:
     @staticmethod
     def make(**kwargs):
         def decorator(func):
-            setattr(func, '__expand', kwargs)
+            setattr(func, "__expand", kwargs)
             return func
+
         return decorator
 
 
 # Systemd integration tests
 class SdNotify:
     def __init__(self, tmpdir):
-        assert(tmpdir is not None)
+        assert tmpdir is not None
         soflags = socket.SOCK_DGRAM | socket.SOCK_CLOEXEC | socket.SOCK_NONBLOCK
         self.sock = socket.socket(socket.AF_UNIX, soflags)
-        self.path = os.path.join(tmpdir, 'bolt_notify_socket')
+        self.path = os.path.join(tmpdir, "bolt_notify_socket")
         self.sock.bind(self.path)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
         self.msgs = []
@@ -1001,7 +1013,7 @@ class SdNotify:
 
         if msg is None:
             return None
-        msg = msg.decode('utf-8')
+        msg = msg.decode("utf-8")
         self.msgs.append(msg)
         return msg
 
@@ -1049,50 +1061,49 @@ class BoltTest(dbusmock.DBusTestCase):
     def path_from_service_file(_sf):
         with open(SERVICE_FILE) as f:
             for line in f:
-                if not line.startswith('Exec='):
+                if not line.startswith("Exec="):
                     continue
-                return line.split('=', 1)[1].strip()
+                return line.split("=", 1)[1].strip()
         return None
 
     @classmethod
     def setUpClass(cls):
         boltd = None
         boltctl = None
-        if 'BOLT_BUILD_DIR' in os.environ:
-            print('Testing local build')
-            build_dir = os.environ['BOLT_BUILD_DIR']
-            boltd = os.path.join(build_dir, 'boltd')
-            boltctl = os.path.join(build_dir, 'boltctl')
-        elif 'UNDER_JHBUILD' in os.environ:
-            print('Testing JHBuild version')
-            jhbuild_prefix = os.environ['JHBUILD_PREFIX']
-            boltd = os.path.join(jhbuild_prefix, 'libexec', 'boltd')
-            boltctl = os.path.join(jhbuild_prefix, 'bin', 'boltctl')
+        if "BOLT_BUILD_DIR" in os.environ:
+            print("Testing local build")
+            build_dir = os.environ["BOLT_BUILD_DIR"]
+            boltd = os.path.join(build_dir, "boltd")
+            boltctl = os.path.join(build_dir, "boltctl")
+        elif "UNDER_JHBUILD" in os.environ:
+            print("Testing JHBuild version")
+            jhbuild_prefix = os.environ["JHBUILD_PREFIX"]
+            boltd = os.path.join(jhbuild_prefix, "libexec", "boltd")
+            boltctl = os.path.join(jhbuild_prefix, "bin", "boltctl")
         else:
-            print('Testing installed system binaries')
+            print("Testing installed system binaries")
             boltd = BoltTest.path_from_service_file(SERVICE_FILE)
-            boltctl = shutil.which('boltctl')
+            boltctl = shutil.which("boltctl")
 
-        assert boltd is not None, 'failed to find daemon'
+        assert boltd is not None, "failed to find daemon"
         assert os.access(boltctl, os.X_OK), "could not execute @ " + boltctl
-        cls.paths = {'daemon': boltd,
-                     'boltctl': boltctl}
+        cls.paths = {"daemon": boltd, "boltctl": boltctl}
 
         cls.test_bus = Gio.TestDBus.new(Gio.TestDBusFlags.NONE)
         cls.test_bus.up()
         try:
-            del os.environ['DBUS_SESSION_BUS_ADDRESS']
+            del os.environ["DBUS_SESSION_BUS_ADDRESS"]
         except KeyError:
             pass
-        os.environ['DBUS_SYSTEM_BUS_ADDRESS'] = cls.test_bus.get_bus_address()
+        os.environ["DBUS_SYSTEM_BUS_ADDRESS"] = cls.test_bus.get_bus_address()
         cls.dbus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
         # a well known key that can be used in testing
-        cls.key = 'b68bce095a13ac39e9254a88b189a38f240487aa6f78f803390a0cdeceb774d8'
+        cls.key = "b68bce095a13ac39e9254a88b189a38f240487aa6f78f803390a0cdeceb774d8"
 
         # monkey patch Gio.IOErrorEnum to have a.quark() method
         # so it behaves like Gio.DBusError
-        io_error_quark = GLib.quark_from_static_string('g-io-error-quark')
-        setattr(Gio.IOErrorEnum, 'quark', lambda _self: io_error_quark)
+        io_error_quark = GLib.quark_from_static_string("g-io-error-quark")
+        setattr(Gio.IOErrorEnum, "quark", lambda _self: io_error_quark)
 
     @classmethod
     def tearDownClass(cls):
@@ -1104,9 +1115,9 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertTrue(UMockdev.in_mock_environment())
         self.dbpath = tempfile.mkdtemp()
         self.rundir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.dbpath, 'devices'))
-        os.makedirs(os.path.join(self.dbpath, 'domains'))
-        os.makedirs(os.path.join(self.dbpath, 'keys'))
+        os.makedirs(os.path.join(self.dbpath, "devices"))
+        os.makedirs(os.path.join(self.dbpath, "domains"))
+        os.makedirs(os.path.join(self.dbpath, "keys"))
 
         self.client = None
         self.log = None
@@ -1132,39 +1143,40 @@ class BoltTest(dbusmock.DBusTestCase):
 
     # dbus helper methods
     def get_dbus_property(self, name, interface=DBUS_IFACE_MANAGER):
-        proxy = Gio.DBusProxy.new_sync(self.dbus,
-                                       Gio.DBusProxyFlags.DO_NOT_AUTO_START,
-                                       None,
-                                       DBUS_NAME,
-                                       DBUS_PATH,
-                                       'org.freedesktop.DBus.Properties',
-                                       None)
-        return proxy.Get('(ss)', interface, name)
+        proxy = Gio.DBusProxy.new_sync(
+            self.dbus,
+            Gio.DBusProxyFlags.DO_NOT_AUTO_START,
+            None,
+            DBUS_NAME,
+            DBUS_PATH,
+            "org.freedesktop.DBus.Properties",
+            None,
+        )
+        return proxy.Get("(ss)", interface, name)
 
     # daemon helper
     def daemon_start(self, sdnotify=False):
-        timeout = get_timeout('daemon_start')  # seconds
+        timeout = get_timeout("daemon_start")  # seconds
         env = os.environ.copy()
-        env['G_DEBUG'] = 'fatal-criticals'
-        env['UMOCKDEV_DIR'] = self.testbed.get_root_dir()
-        env['SYSTEMD_DEVICE_VERIFY_SYSFS'] = '0'
-        env['STATE_DIRECTORY'] = self.dbpath
-        env['RUNTIME_DIRECTORY'] = self.rundir
+        env["G_DEBUG"] = "fatal-criticals"
+        env["UMOCKDEV_DIR"] = self.testbed.get_root_dir()
+        env["SYSTEMD_DEVICE_VERIFY_SYSFS"] = "0"
+        env["STATE_DIRECTORY"] = self.dbpath
+        env["RUNTIME_DIRECTORY"] = self.rundir
         if sdnotify:
             self.sdnotify = SdNotify(self.rundir)
-            env['NOTIFY_SOCKET'] = self.sdnotify.path
-        argv = [self.paths['daemon'], '-v']
-        valgrind = os.getenv('VALGRIND')
+            env["NOTIFY_SOCKET"] = self.sdnotify.path
+        argv = [self.paths["daemon"], "-v"]
+        valgrind = os.getenv("VALGRIND")
         if valgrind is not None:
-            argv.insert(0, 'valgrind')
-            argv.insert(1, '--leak-check=full')
+            argv.insert(0, "valgrind")
+            argv.insert(1, "--leak-check=full")
             if os.path.exists(valgrind):
-                argv.insert(2, '--suppressions=%s' % valgrind)
+                argv.insert(2, "--suppressions=%s" % valgrind)
             self.valgrind = True
-        self.daemon = subprocess.Popen(argv,
-                                       env=env,
-                                       stdout=self.log,
-                                       stderr=subprocess.STDOUT)
+        self.daemon = subprocess.Popen(
+            argv, env=env, stdout=self.log, stderr=subprocess.STDOUT
+        )
 
         timeout_count = timeout * 10
         timeout_sleep = 0.1
@@ -1172,16 +1184,16 @@ class BoltTest(dbusmock.DBusTestCase):
             time.sleep(timeout_sleep)
             timeout_count -= 1
             try:
-                self.get_dbus_property('Version')
+                self.get_dbus_property("Version")
                 break
             except GLib.GError:
                 pass
         else:
             timeout_time = timeout * 10 * timeout_sleep
-            self.fail('daemon did not start in %d seconds' % timeout_time)
+            self.fail("daemon did not start in %d seconds" % timeout_time)
 
         self.client = BoltClient(self.dbus)
-        self.assertEqual(self.daemon.poll(), None, 'daemon crashed')
+        self.assertEqual(self.daemon.poll(), None, "daemon crashed")
 
     def daemon_stop(self):
 
@@ -1197,7 +1209,8 @@ class BoltTest(dbusmock.DBusTestCase):
 
     def polkitd_start(self):
         self._polkitd, self._polkitd_obj = self.spawn_server_template(
-            'polkitd', {}, stdout=subprocess.DEVNULL)
+            "polkitd", {}, stdout=subprocess.DEVNULL
+        )
         self.polkitd = dbus.Interface(self._polkitd_obj, dbusmock.MOCK_IFACE)
 
     def polkitd_stop(self):
@@ -1211,32 +1224,31 @@ class BoltTest(dbusmock.DBusTestCase):
         cfg = configparser.ConfigParser()
         cfg.optionxform = lambda option: option
 
-        cfg['config'] = {}
+        cfg["config"] = {}
         for k, v in kwargs.items():
-            cfg['config'][k] = v
+            cfg["config"][k] = v
 
-        path = os.path.join(self.dbpath, 'boltd.conf')
-        with open(path, 'w') as f:
+        path = os.path.join(self.dbpath, "boltd.conf")
+        with open(path, "w") as f:
             cfg.write(f)
 
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             print(f.read())
 
     # executing boltctl
     def boltctl(self, *args):
         env = os.environ.copy()
-        env['G_MESSAGES_DEBUG'] = "all"
-        args = [self.paths['boltctl']] + list(args)
+        env["G_MESSAGES_DEBUG"] = "all"
+        args = [self.paths["boltctl"]] + list(args)
 
-        print('Calling: ' + " ".join(args), file=sys.stderr)
-        process = subprocess.Popen(args,
-                                   env=env,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+        print("Calling: " + " ".join(args), file=sys.stderr)
+        process = subprocess.Popen(
+            args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         stdout, stderr = process.communicate()
         ret = process.returncode
         if ret != 0:
-            print('OUTPUT:')
+            print("OUTPUT:")
             print(stdout, file=sys.stdout)
             print(stderr, file=sys.stderr)
         return stdout, stderr, ret
@@ -1245,22 +1257,19 @@ class BoltTest(dbusmock.DBusTestCase):
     @staticmethod
     def default_mock_tree(acl=None):
         # default mock tree
-        mt = TbDomain(host=TbHost([
-            TbDevice('Cable1'),
-            TbDevice('Cable2'),
-            TbDevice('SSD1')
-        ]), acl=acl)
+        mt = TbDomain(
+            host=TbHost([TbDevice("Cable1"), TbDevice("Cable2"), TbDevice("SSD1")]),
+            acl=acl,
+        )
         return mt
 
     @staticmethod
     def simple_mock_tree():
-        mt = TbDomain(host=TbHost([
-            TbDevice('Dock')
-        ]))
+        mt = TbDomain(host=TbHost([TbDevice("Dock")]))
         return mt
 
     def assertGError(self, have, want):
-        if hasattr(have, 'exception'):
+        if hasattr(have, "exception"):
             have = have.exception
 
         domain = GLib.quark_to_string(want.quark())
@@ -1296,40 +1305,60 @@ class BoltTest(dbusmock.DBusTestCase):
 
         return True
 
-    def add_domain_host(self, domain=0, security='secure', uid=None, bootacl=15, iommu=None, nhi=0x15d2):
+    def add_domain_host(
+        self, domain=0, security="secure", uid=None, bootacl=15, iommu=None, nhi=0x15D2
+    ):
 
         if uid is None:
             uid = str(uuid.uuid4())
 
-        nhi = self.testbed.add_device('pci', '0000:00:0d.%d' % domain, None,
-                                      ['class', '0x088000',
-                                       'vendor', '0x8086',
-                                       'device', '0x%04x' % nhi],
-                                      ['DRIVER', 'thunderbolt'])
+        nhi = self.testbed.add_device(
+            "pci",
+            "0000:00:0d.%d" % domain,
+            None,
+            ["class", "0x088000", "vendor", "0x8086", "device", "0x%04x" % nhi],
+            ["DRIVER", "thunderbolt"],
+        )
 
-        props = ['security', security]
+        props = ["security", security]
 
         if isinstance(bootacl, int):
-            bootacl = ',' * (bootacl-1)
+            bootacl = "," * (bootacl - 1)
 
         if bootacl is not None:
-            props += ['boot_acl', bootacl]
+            props += ["boot_acl", bootacl]
 
         if iommu is not None:
-            props += ['iommu_dma_protection', str(iommu) + '\n']
+            props += ["iommu_dma_protection", str(iommu) + "\n"]
 
-        dc = self.testbed.add_device('thunderbolt', 'domain%d' % domain, nhi,
-                                     props,
-                                     ['DEVTYPE', 'thunderbolt_domain'])
+        dc = self.testbed.add_device(
+            "thunderbolt",
+            "domain%d" % domain,
+            nhi,
+            props,
+            ["DEVTYPE", "thunderbolt_domain"],
+        )
 
-        host = self.testbed.add_device('thunderbolt', "%d-0" % domain, dc,
-                                       ['device_name', 'Host',
-                                        'device', '0x23',
-                                        'vendor_name', 'GNOME.org',
-                                        'vendor', '0x23',
-                                        'authorized', '1',
-                                        'unique_id', uid],
-                                       ['DEVTYPE', 'thunderbolt_device'])
+        host = self.testbed.add_device(
+            "thunderbolt",
+            "%d-0" % domain,
+            dc,
+            [
+                "device_name",
+                "Host",
+                "device",
+                "0x23",
+                "vendor_name",
+                "GNOME.org",
+                "vendor",
+                "0x23",
+                "authorized",
+                "1",
+                "unique_id",
+                uid,
+            ],
+            ["DEVTYPE", "thunderbolt_device"],
+        )
         return dc, host
 
     def remove_domain_host(self, domain, host):
@@ -1341,28 +1370,41 @@ class BoltTest(dbusmock.DBusTestCase):
         self.testbed.uevent(nhi, "remove")
         self.testbed.remove_device(nhi)
 
-    def add_device(self, parent, devid, name, vendor, domain=0, authorized=1, key='', boot=None):
+    def add_device(
+        self, parent, devid, name, vendor, domain=0, authorized=1, key="", boot=None
+    ):
         uid = str(uuid.uuid4())
-        props = ['device_name', name,
-                 'device', '0x23',
-                 'vendor_name', vendor,
-                 'vendor', '0x23',
-                 'authorized', '%d' % authorized,
-                 'unique_id', uid]
+        props = [
+            "device_name",
+            name,
+            "device",
+            "0x23",
+            "vendor_name",
+            vendor,
+            "vendor",
+            "0x23",
+            "authorized",
+            "%d" % authorized,
+            "unique_id",
+            uid,
+        ]
 
         if key is not None:
             # The kernel always returns the key with trailing `\n`
-            if not key.endswith('\n'):
-                key += '\n'
-            props += ['key', key]
+            if not key.endswith("\n"):
+                key += "\n"
+            props += ["key", key]
 
         if boot is not None:
-            props += ['boot', boot]
+            props += ["boot", boot]
 
-        d = self.testbed.add_device('thunderbolt',
-                                    "%d-%d" % (domain, devid), parent,
-                                    props,
-                                    ['DEVTYPE', 'thunderbolt_device'])
+        d = self.testbed.add_device(
+            "thunderbolt",
+            "%d-%d" % (domain, devid),
+            parent,
+            props,
+            ["DEVTYPE", "thunderbolt_device"],
+        )
         return d, uid
 
     def find_device_by_uid(self, lst, uid):
@@ -1370,78 +1412,75 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertEqual(len(x), 1)
         return x[0]
 
-    def store_put_device(self, dev, policy='auto', key=None):
+    def store_put_device(self, dev, policy="auto", key=None):
         df = configparser.ConfigParser()
         df.optionxform = lambda option: option
 
         uid = dev.unique_id
-        df['device'] = {
-            'name': dev.device_name,
-            'vendor': dev.vendor_name,
-            'type': 'host' if isinstance(dev, TbHost) else 'peripheral'
+        df["device"] = {
+            "name": dev.device_name,
+            "vendor": dev.vendor_name,
+            "type": "host" if isinstance(dev, TbHost) else "peripheral",
         }
 
-        df['user'] = {
-            'storetime': int(time.time()),
-            'policy': policy
-        }
+        df["user"] = {"storetime": int(time.time()), "policy": policy}
 
         if dev.generation:
-            df['device']['generation'] = dev.generation
+            df["device"]["generation"] = dev.generation
 
-        path = os.path.join(self.dbpath, 'devices', uid)
-        with open(path, 'w') as f:
+        path = os.path.join(self.dbpath, "devices", uid)
+        with open(path, "w") as f:
             df.write(f)
 
-        if key == 'known':
-            key = 'a26d5ad55b011df39ae06cae1fd329babfecac3465fe0a8828d6178f88e59083'
-        elif key == 'device':
+        if key == "known":
+            key = "a26d5ad55b011df39ae06cae1fd329babfecac3465fe0a8828d6178f88e59083"
+        elif key == "device":
             key = dev.key
 
         if key is None:
             return
 
-        path = os.path.join(self.dbpath, 'keys', uid)
-        with open(path, 'w') as f:
+        path = os.path.join(self.dbpath, "keys", uid)
+        with open(path, "w") as f:
             f.write(key)
 
     def store_get_device(self, uid):
-        path = os.path.join(self.dbpath, 'devices', uid)
+        path = os.path.join(self.dbpath, "devices", uid)
         df = configparser.ConfigParser()
         df.read(path)
 
-        device = df['device']
-        name = device['name']
-        vendor = device['vendor']
+        device = df["device"]
+        name = device["name"]
+        vendor = device["vendor"]
         generation = None
-        if 'generation' in device:
-            generation = int(device['generation'])
+        if "generation" in device:
+            generation = int(device["generation"])
 
-        dtype = device['type']
-        if dtype == 'host':
+        dtype = device["type"]
+        if dtype == "host":
             dev = TbHost([], gen=generation)
-        elif dtype == 'peripheral':
+        elif dtype == "peripheral":
             dev = TbDevice(name, vendor=vendor, uid=uid, gen=generation)
         else:
-            raise ValueError('Unknown device type')
+            raise ValueError("Unknown device type")
         return dev
 
     @contextmanager
     def store_deny_device(self, uid):
-        path = os.path.join(self.dbpath, 'devices', uid)
+        path = os.path.join(self.dbpath, "devices", uid)
         fd = os.open(path, os.O_RDWR)
         mode = os.fstat(fd).st_mode
         try:
-            print('store: denying access to %s' % uid, file=sys.stderr)
+            print("store: denying access to %s" % uid, file=sys.stderr)
             os.fchmod(fd, 0)
             yield fd
         finally:
-            print('store: restoring access to %s' % uid, file=sys.stderr)
+            print("store: restoring access to %s" % uid, file=sys.stderr)
             os.fchmod(fd, mode & 0o7777)
             os.close(fd)
 
     def store_has_domain(self, uid):
-        path = os.path.join(self.dbpath, 'domains', uid)
+        path = os.path.join(self.dbpath, "domains", uid)
         return os.path.exists(path)
 
     def store_create_domain(self, *, uid=None, acl=None):
@@ -1452,12 +1491,9 @@ class BoltTest(dbusmock.DBusTestCase):
         else:
             bootacl = ""
 
-        entry = (
-            "[domain]\n"
-            f"bootacl={bootacl}\n"
-        )
-        path = os.path.join(self.dbpath, 'domains', uid)
-        with open(path, 'w') as f:
+        entry = "[domain]\n" f"bootacl={bootacl}\n"
+        path = os.path.join(self.dbpath, "domains", uid)
+        with open(path, "w") as f:
             f.write(entry)
         return uid
 
@@ -1467,14 +1503,14 @@ class BoltTest(dbusmock.DBusTestCase):
         journal = os.path.join(self.dbpath, name)
         os.makedirs(journal, exist_ok=True)
         path = os.path.join(journal, uid)
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write("\n".join(data))
 
     # the actual tests
     def test_basic(self):
         def make_events(name, devices):
-            paths = [GLib.Variant("(o)", (dev.bus_path, )) for dev in devices]
-            return [Recorder.Event('signal', name, path, None) for path in paths]
+            paths = [GLib.Variant("(o)", (dev.bus_path,)) for dev in devices]
+            return [Recorder.Event("signal", name, path, None) for path in paths]
 
         self.daemon_start()
         version = self.client.version
@@ -1482,14 +1518,13 @@ class BoltTest(dbusmock.DBusTestCase):
         d = self.client.list_devices()
         self.assertEqual(len(d), 0)
         policy = self.client.default_policy
-        self.assertIn(policy, [self.client.POLICY_AUTO,
-                               self.client.POLICY_MANUAL])
+        self.assertIn(policy, [self.client.POLICY_AUTO, self.client.POLICY_MANUAL])
 
         # connect all device and make sure we get the proper events
         tree = self.default_mock_tree()
 
         with self.client.record() as tape:
-            events = make_events('DeviceAdded', tree.devices)
+            events = make_events("DeviceAdded", tree.devices)
             tree.connect_tree(self.testbed)
             res = tape.wait_for_events(events)
             self.assertTrue(res)
@@ -1502,7 +1537,7 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # disconnect all devices again (don't check the host, i.e. peripherals only)
         with self.client.record() as tape:
-            events = make_events('DeviceRemoved', tree.peripherals)
+            events = make_events("DeviceRemoved", tree.peripherals)
             tree.disconnect(self.testbed)
             res = tape.wait_for_events(events)
             self.assertTrue(res)
@@ -1517,27 +1552,35 @@ class BoltTest(dbusmock.DBusTestCase):
         self.daemon_stop()
 
     def test_auth_mode(self):
-        _, host = self.add_domain_host(security='secure')
+        _, host = self.add_domain_host(security="secure")
 
         self.daemon_start()
         self.polkitd_start()
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.manage',
-                                 'org.freedesktop.bolt.enroll',
-                                 'org.freedesktop.bolt.authorize'])
+        self.polkitd.SetAllowed(
+            [
+                "org.freedesktop.bolt.manage",
+                "org.freedesktop.bolt.enroll",
+                "org.freedesktop.bolt.authorize",
+            ]
+        )
 
         client = self.client
 
-        self.assertEqual(client.auth_mode, 'enabled')
+        self.assertEqual(client.auth_mode, "enabled")
 
         # disable the authorization
         with client.record() as tape:
-            client.auth_mode = 'disabled'
-            tape.wait_for_props(AuthMode='disabled')
-        self.assertEqual(client.auth_mode, 'disabled')
+            client.auth_mode = "disabled"
+            tape.wait_for_props(AuthMode="disabled")
+        self.assertEqual(client.auth_mode, "disabled")
 
-        _, d1_uid = self.add_device(host, 1, "Dock", "GNOME.org", authorized=0, key='', boot='0')
-        _, d2_uid = self.add_device(host, 2, "Dock2", "GNOME.org", authorized=0, key=None, boot='0')
+        _, d1_uid = self.add_device(
+            host, 1, "Dock", "GNOME.org", authorized=0, key="", boot="0"
+        )
+        _, d2_uid = self.add_device(
+            host, 2, "Dock2", "GNOME.org", authorized=0, key=None, boot="0"
+        )
 
         devices = self.client.list_devices()
         self.assertEqual(len(devices), 3)
@@ -1561,9 +1604,9 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # enable the authorization again now
         with client.record() as tape:
-            client.auth_mode = 'enabled'
-            tape.wait_for_props(AuthMode='enabled')
-        self.assertEqual(client.auth_mode, 'enabled')
+            client.auth_mode = "enabled"
+            tape.wait_for_props(AuthMode="enabled")
+        self.assertEqual(client.auth_mode, "enabled")
 
         policy = BoltClient.POLICY_DEFAULT
         for remote, uid in remotes:
@@ -1580,26 +1623,26 @@ class BoltTest(dbusmock.DBusTestCase):
     def test_domain_basic(self):
 
         def make_uid(domain):
-            return '884c6edd-7118-4b21-b186-b02d396ecca%d' % domain
+            return "884c6edd-7118-4b21-b186-b02d396ecca%d" % domain
 
         def make_domain(domain, security):
-            name = 'domain%d' % domain
+            name = "domain%d" % domain
             uid = make_uid(domain)
             dom, host = self.add_domain_host(domain, security=security, uid=uid)
             return name, dom, host
 
         # check we get a proper event if the security level changes
         self.daemon_start()
-        self.assertEqual(self.client.security_level, 'unknown')
+        self.assertEqual(self.client.security_level, "unknown")
         with self.client.record() as tape:
-            d, dom, host = make_domain(0, 'user')
-            tape.wait_for_props(SecurityLevel='user')
-            self.assertEqual(self.client.security_level, 'user')
+            d, dom, host = make_domain(0, "user")
+            tape.wait_for_props(SecurityLevel="user")
+            self.assertEqual(self.client.security_level, "user")
         self.daemon_stop()
         self.remove_domain_host(dom, host)
 
         # create more then one domain
-        security = 'secure'
+        security = "secure"
         domains = [make_domain(i, security) for i in range(4)]
         self.daemon_start()
 
@@ -1625,14 +1668,14 @@ class BoltTest(dbusmock.DBusTestCase):
 
             with remote.record() as tape:
                 self.remove_domain_host(domain, host)
-                tape.wait_for_props(SysfsPath='')
+                tape.wait_for_props(SysfsPath="")
 
         for d in range(4):
             remote = self.client.domain_by_id(make_uid(d))
             self.assertIsNotNone(remote)
 
             with remote.record() as tape:
-                name, domain, host = make_domain(d, 'secure')
+                name, domain, host = make_domain(d, "secure")
                 tape.wait_for_props(SysfsPath=domain)
 
         remotes = self.client.list_domains()
@@ -1641,20 +1684,17 @@ class BoltTest(dbusmock.DBusTestCase):
         self.daemon_stop()
 
     def test_domain_connected(self):
-        uid = '884c6edd-7118-4b21-b186-b02d396ecafe'
-        entry = (
-            "[domain]\n"
-            "bootacl=\n"
-        )
-        path = os.path.join(self.dbpath, 'domains', uid)
-        with open(path, 'w') as f:
+        uid = "884c6edd-7118-4b21-b186-b02d396ecafe"
+        entry = "[domain]\n" "bootacl=\n"
+        path = os.path.join(self.dbpath, "domains", uid)
+        with open(path, "w") as f:
             f.write(entry)
 
         self.daemon_start()
-        self.assertEqual(self.client.security_level, 'unknown')
+        self.assertEqual(self.client.security_level, "unknown")
 
         with self.client.record() as tape:
-            security = 'secure'
+            security = "secure"
             self.add_domain_host(0, security=security, uid=uid)
             tape.wait_for_props(SecurityLevel=security)
             self.assertEqual(self.client.security_level, security)
@@ -1663,23 +1703,22 @@ class BoltTest(dbusmock.DBusTestCase):
 
     def test_domain_bootacl(self):
 
-        ssd1 = TbDevice('SSD1',)
-        cable1 = TbDevice('Cable1', children=[ssd1])
-        ssd2 = TbDevice('SSD2')
-        cable2 = TbDevice('Cable2', children=[ssd2])
+        ssd1 = TbDevice(
+            "SSD1",
+        )
+        cable1 = TbDevice("Cable1", children=[ssd1])
+        ssd2 = TbDevice("SSD2")
+        cable2 = TbDevice("Cable2", children=[ssd2])
 
-        host = TbHost([cable1,
-                       cable2])
-        tree = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        acl=9,
-                        host=host)
+        host = TbHost([cable1, cable2])
+        tree = TbDomain(security=TbDomain.SECURITY_SECURE, acl=9, host=host)
 
         tree.connect_tree(self.testbed)
 
         self.store_put_device(cable1, key=None)
-        self.store_put_device(ssd1, key='known')
-        self.store_put_device(cable2, key='known')
-        self.store_put_device(ssd2, key='known')
+        self.store_put_device(ssd1, key="known")
+        self.store_put_device(cable2, key="known")
+        self.store_put_device(ssd2, key="known")
 
         domain_id = host.unique_id
 
@@ -1689,7 +1728,7 @@ class BoltTest(dbusmock.DBusTestCase):
 
         domain = client.domain_by_id(domain_id)
         bootacl = domain.bootacl
-        print('domain [%s] bootacl: %s' % (domain.uid, bootacl))
+        print("domain [%s] bootacl: %s" % (domain.uid, bootacl))
 
         self.assertNotIn(host.unique_id, bootacl)
 
@@ -1699,13 +1738,13 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # try to set the bootacl, without PolKit allowing it
         with self.assertRaises(GLib.GError) as cm:
-            domain.bootacl = ['']
+            domain.bootacl = [""]
         self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.manage'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.manage"])
 
         # try to set an invalid bootacl
         with self.assertRaises(GLib.GError) as cm:
-            domain.bootacl = ['']
+            domain.bootacl = [""]
         self.assertGError(cm, Gio.IOErrorEnum.INVALID_ARGUMENT)
 
         # try to set an invalid bootacl, 2nd time
@@ -1715,16 +1754,18 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # remove all entries
         with domain.record() as tape:
-            domain.bootacl = ['']*len(bootacl)
+            domain.bootacl = [""] * len(bootacl)
             tape.wait_for_props(BootACL=None)
             bootacl = domain.bootacl
-            print('domain [%s] bootacl: %s' % (domain.uid, bootacl))
-            self.assertTrue(all([x == '' for x in bootacl]))
+            print("domain [%s] bootacl: %s" % (domain.uid, bootacl))
+            self.assertTrue(all([x == "" for x in bootacl]))
 
-        bootacl_new = ['']*len(bootacl)
-        uuids = ["884c6edd-7118-4b21-b186-b02d396ecca0",
-                 "58796843-4a8b-4578-921a-acc654984bfb",
-                 "0cc8556f-c73b-41c0-990e-f1e317360626"]
+        bootacl_new = [""] * len(bootacl)
+        uuids = [
+            "884c6edd-7118-4b21-b186-b02d396ecca0",
+            "58796843-4a8b-4578-921a-acc654984bfb",
+            "0cc8556f-c73b-41c0-990e-f1e317360626",
+        ]
 
         for i, u in enumerate(uuids):
             bootacl_new[i] = u
@@ -1733,7 +1774,7 @@ class BoltTest(dbusmock.DBusTestCase):
             domain.bootacl = bootacl_new
             tape.wait_for_props(BootACL=None)
             bootacl = domain.bootacl
-            print('domain [%s] bootacl: %s' % (domain.uid, bootacl))
+            print("domain [%s] bootacl: %s" % (domain.uid, bootacl))
             for entry in uuids:
                 self.assertIn(entry, uuids)
 
@@ -1744,14 +1785,14 @@ class BoltTest(dbusmock.DBusTestCase):
         # stable, i.e. it changes between reboots. We therefore must not be
         # saving the domain
         def make_events(name, devices):
-            paths = [GLib.Variant("(o)", (dev.object_path, )) for dev in devices]
-            return [Recorder.Event('signal', name, path, None) for path in paths]
+            paths = [GLib.Variant("(o)", (dev.object_path,)) for dev in devices]
+            return [Recorder.Event("signal", name, path, None) for path in paths]
 
         ice_lake = {
-            "security": 'none',
-            "bootacl":None,
+            "security": "none",
+            "bootacl": None,
             "iommu": "1",
-            "nhi": 0x8a17,  # ice lake
+            "nhi": 0x8A17,  # ice lake
         }
 
         dom, host = self.add_domain_host(**ice_lake)
@@ -1764,7 +1805,7 @@ class BoltTest(dbusmock.DBusTestCase):
             self.assertFalse(self.store_has_domain(domain.uid))
 
         with self.client.record() as tape:
-            events = make_events('DomainRemoved', domains)
+            events = make_events("DomainRemoved", domains)
 
             self.remove_domain_host(dom, host)
 
@@ -1806,9 +1847,7 @@ class BoltTest(dbusmock.DBusTestCase):
 
         with client.record() as tape:
             self.daemon_start()
-            res = tape.wait_for_event('signal',
-                                      'DeviceAdded',
-                                      None)
+            res = tape.wait_for_event("signal", "DeviceAdded", None)
             self.assertTrue(res)
         self.daemon_stop()
 
@@ -1819,37 +1858,52 @@ class BoltTest(dbusmock.DBusTestCase):
         # pylint: disable=bad-whitespace
         devs = [
             # name              vendor           label                         notes
-            ['GNOME.org Cable', 'GNOME.org',     'GNOME.org Cable'     ''],  # duplicated vendor name
-            ['GNOME.org Cable', 'GNOME.org',     'GNOME.org Cable #2'  ''],  # duplicated device
-            ['GNOME.org Cable', 'GNOME.org',     'GNOME.org Cable #3'  ''],  # duplicated device, again
-            ['⍾ Laptop',        'Evil Corp. ☢', 'Evil Corp. ☢ ⍾ Laptop'],  # utf-8 chars
-            ['HP TB3 Dock',     'HP Inc.',       'HP TB3 Dock'         ''],  # cleanup company names
-            ['TB Gadget',       'Apple, Inc.',   'Apple TB Gadget'     ''],  # cleanup company names
+            [
+                "GNOME.org Cable",
+                "GNOME.org",
+                "GNOME.org Cable" "",
+            ],  # duplicated vendor name
+            [
+                "GNOME.org Cable",
+                "GNOME.org",
+                "GNOME.org Cable #2" "",
+            ],  # duplicated device
+            [
+                "GNOME.org Cable",
+                "GNOME.org",
+                "GNOME.org Cable #3" "",
+            ],  # duplicated device, again
+            ["⍾ Laptop", "Evil Corp. ☢", "Evil Corp. ☢ ⍾ Laptop"],  # utf-8 chars
+            ["HP TB3 Dock", "HP Inc.", "HP TB3 Dock" ""],  # cleanup company names
+            ["TB Gadget", "Apple, Inc.", "Apple TB Gadget" ""],  # cleanup company names
         ]
         # pylint: enable=bad-whitespace
 
-        devs = [{'name': d[0], 'vendor': d[1], 'label': d[2], 'id': i+1} for i, d in enumerate(devs)]
+        devs = [
+            {"name": d[0], "vendor": d[1], "label": d[2], "id": i + 1}
+            for i, d in enumerate(devs)
+        ]
 
         for d in devs:
-            did, name, vendor = d['id'], d['name'], d['vendor']
+            did, name, vendor = d["id"], d["name"], d["vendor"]
             path, uid = self.add_device(host, did, name, vendor)
-            d['path'] = path
-            d['uid'] = uid
+            d["path"] = path
+            d["uid"] = uid
 
         self.daemon_start()
         devices = self.client.list_devices()
         self.assertEqual(len(devices), len(devs) + 1)
 
         for d in devs:
-            remote = self.find_device_by_uid(devices, d['uid'])
-            self.assertEqual(remote.name, d['name'])
-            self.assertEqual(remote.vendor, d['vendor'])
-            self.assertEqual(remote.label, d['label'])
+            remote = self.find_device_by_uid(devices, d["uid"])
+            self.assertEqual(remote.name, d["name"])
+            self.assertEqual(remote.vendor, d["vendor"])
+            self.assertEqual(remote.label, d["label"])
 
         self.daemon_stop()
 
     def test_basic_user_config(self):
-        self.user_config(DefaultPolicy='manual')
+        self.user_config(DefaultPolicy="manual")
 
         self.daemon_start()
         policy = self.client.default_policy
@@ -1878,10 +1932,14 @@ class BoltTest(dbusmock.DBusTestCase):
     def test_device_authflags(self):
         key = self.key
 
-        dc, host = self.add_domain_host(security='dponly')
+        dc, host = self.add_domain_host(security="dponly")
 
-        d1, d1_uid = self.add_device(host, 1, "Dock", "GNOME.org", authorized=1, key=None)
-        d2, d2_uid = self.add_device(host, 2, "Dock2", "GNOME.org", authorized=1, key=None)
+        d1, d1_uid = self.add_device(
+            host, 1, "Dock", "GNOME.org", authorized=1, key=None
+        )
+        d2, d2_uid = self.add_device(
+            host, 2, "Dock2", "GNOME.org", authorized=1, key=None
+        )
 
         self.daemon_start()
         devices = self.client.list_devices()
@@ -1893,7 +1951,7 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertEqual(device.authflags, BoltDevice.NOPCIE)
         self.daemon_stop()
 
-        self.testbed.set_attribute(dc, 'security', 'usbonly')
+        self.testbed.set_attribute(dc, "security", "usbonly")
         self.daemon_start()
         devices = self.client.list_devices()
         self.assertEqual(len(devices), 3)
@@ -1907,10 +1965,14 @@ class BoltTest(dbusmock.DBusTestCase):
         # secure mode
         self.testbed.remove_device(d1)
         self.testbed.remove_device(d2)
-        self.testbed.set_attribute(dc, 'security', 'secure')
+        self.testbed.set_attribute(dc, "security", "secure")
 
-        d1, d1_uid = self.add_device(host, 1, "Dock", "GNOME.org", authorized=2, key=key, boot='0')
-        d2, d2_uid = self.add_device(host, 2, "Dock2", "GNOME.org", authorized=1, key=None, boot='1')
+        d1, d1_uid = self.add_device(
+            host, 1, "Dock", "GNOME.org", authorized=2, key=key, boot="0"
+        )
+        d2, d2_uid = self.add_device(
+            host, 2, "Dock2", "GNOME.org", authorized=1, key=None, boot="1"
+        )
 
         self.daemon_start()
         devices = self.client.list_devices()
@@ -1943,14 +2005,14 @@ class BoltTest(dbusmock.DBusTestCase):
                 remote.authorize()
             self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.authorize'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.authorize"])
         before = int(time.time())
         for d in to_authorize:
             remote = self.client.device_by_uid(d.unique_id)
             tape = remote.record()
             remote.authorize()
             d.reload_auth()  # will emit the uevent, so the daemon can update
-            tape.wait_for_props(Status='authorized')
+            tape.wait_for_props(Status="authorized")
             self.assertDeviceEqual(d, remote)
             # make sure AuthorizeTime is correct
             now = int(time.time())
@@ -1967,49 +2029,56 @@ class BoltTest(dbusmock.DBusTestCase):
         # enroll the device, disconnect it and then try
         # try to authorize it, verifying we are rejecting
         # the call properly
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.authorize',
-                                 'org.freedesktop.bolt.enroll'])
+        self.polkitd.SetAllowed(
+            ["org.freedesktop.bolt.authorize", "org.freedesktop.bolt.enroll"]
+        )
         d = to_authorize[0]
-        d.writekey('a26d5ad55b011df39ae06cae1fd329babfecac3465fe0a8828d6178f88e59083')
+        d.writekey("a26d5ad55b011df39ae06cae1fd329babfecac3465fe0a8828d6178f88e59083")
         remote = self.client.device_by_uid(d.unique_id)
         with remote.record() as tape:
-            client.enroll(d.unique_id, 'manual')
+            client.enroll(d.unique_id, "manual")
             tape.wait_for_props(Stored=True)
             d.disconnect(self.testbed)
-            tape.wait_for_props(Status='disconnected')
+            tape.wait_for_props(Status="disconnected")
             err = None
             with self.assertRaises(GLib.GError) as cm:
                 remote.authorize()
             err = cm.exception
-            self.assertIn('bolt.Error.BadState', err.message)
+            self.assertIn("bolt.Error.BadState", err.message)
         self.daemon_stop()
 
     def test_device_auto_auth_sl2(self):
-        ssd1 = TbDevice('SSD1',)
-        cable1 = TbDevice('Cable1', children=[ssd1])
-        ssd2 = TbDevice('SSD2')
-        cable2 = TbDevice('Cable2', children=[ssd2])
-        dock1 = TbDevice('Dock1')
-        cable3 = TbDevice('Cable3', children=[dock1])
-        dock2 = TbDevice('Dock2')
-        cable4 = TbDevice('Cable4', children=[dock2])
-        tree = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        host=TbHost([
-                            cable1,
-                            cable2,
-                            cable3,
-                            cable4,
-                        ]))
+        ssd1 = TbDevice(
+            "SSD1",
+        )
+        cable1 = TbDevice("Cable1", children=[ssd1])
+        ssd2 = TbDevice("SSD2")
+        cable2 = TbDevice("Cable2", children=[ssd2])
+        dock1 = TbDevice("Dock1")
+        cable3 = TbDevice("Cable3", children=[dock1])
+        dock2 = TbDevice("Dock2")
+        cable4 = TbDevice("Cable4", children=[dock2])
+        tree = TbDomain(
+            security=TbDomain.SECURITY_SECURE,
+            host=TbHost(
+                [
+                    cable1,
+                    cable2,
+                    cable3,
+                    cable4,
+                ]
+            ),
+        )
         tree.connect_tree(self.testbed)
 
         self.store_put_device(cable1, key=None)
-        self.store_put_device(ssd1, key='known')
-        self.store_put_device(cable2, key='known')
-        self.store_put_device(ssd2, key='known')
-        self.store_put_device(cable3, key='known', policy='manual')
-        self.store_put_device(dock1, key='known')
-        self.store_put_device(cable4, key='known', policy='iommu')
-        self.store_put_device(dock2, key=None, policy='iommu')
+        self.store_put_device(ssd1, key="known")
+        self.store_put_device(cable2, key="known")
+        self.store_put_device(ssd2, key="known")
+        self.store_put_device(cable3, key="known", policy="manual")
+        self.store_put_device(dock1, key="known")
+        self.store_put_device(cable4, key="known", policy="iommu")
+        self.store_put_device(dock2, key=None, policy="iommu")
 
         self.daemon_start()
 
@@ -2022,7 +2091,7 @@ class BoltTest(dbusmock.DBusTestCase):
         tape = remote_ssd2.record()
         with remote_ssd2.record() as tape:
             if remote_ssd2.status != BoltDevice.AUTHORIZED:
-                tape.wait_for_props(Status='authorized')
+                tape.wait_for_props(Status="authorized")
 
         self.assertEqual(remote_ssd2.status, BoltDevice.AUTHORIZED)
 
@@ -2055,34 +2124,42 @@ class BoltTest(dbusmock.DBusTestCase):
         # we start to tape recorder for ssd1 too, so we don't miss its events
         tape_ssd1 = remote_ssd1.record()
         with remote_c1.record() as tape:
-            cable1.authorize('1')
-            tape.wait_for_props(Status='authorized')
+            cable1.authorize("1")
+            tape.wait_for_props(Status="authorized")
         self.assertEqual(remote_c1.status, BoltDevice.AUTHORIZED)
 
-        tape_ssd1.wait_for_props(Status='authorized')
+        tape_ssd1.wait_for_props(Status="authorized")
         events = tape_ssd1.close()
-        self.assertTrue(Recorder.events_list_contains(events, 'property', 'Status', 'authorizing'))
+        self.assertTrue(
+            Recorder.events_list_contains(events, "property", "Status", "authorizing")
+        )
         self.assertEqual(remote_ssd1.status, BoltDevice.AUTHORIZED)
         self.daemon_stop()
 
     def test_device_auto_auth_iommu(self):
-        ssd1 = TbDevice('SSD1',)
-        cable1 = TbDevice('Cable1', children=[ssd1])
-        ssd2 = TbDevice('SSD2')
-        cable2 = TbDevice('Cable2', children=[ssd2])
+        ssd1 = TbDevice(
+            "SSD1",
+        )
+        cable1 = TbDevice("Cable1", children=[ssd1])
+        ssd2 = TbDevice("SSD2")
+        cable2 = TbDevice("Cable2", children=[ssd2])
 
-        tree = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        iommu='1',
-                        host=TbHost([
-                            cable1,
-                            cable2,
-                        ]))
+        tree = TbDomain(
+            security=TbDomain.SECURITY_SECURE,
+            iommu="1",
+            host=TbHost(
+                [
+                    cable1,
+                    cable2,
+                ]
+            ),
+        )
         tree.connect_tree(self.testbed)
 
-        self.store_put_device(cable1, key=None, policy='iommu')
-        self.store_put_device(ssd1, key='known', policy='iommu')
-        self.store_put_device(cable2, key='known', policy='iommu')
-        self.store_put_device(ssd2, key='known', policy='auto')
+        self.store_put_device(cable1, key=None, policy="iommu")
+        self.store_put_device(ssd1, key="known", policy="iommu")
+        self.store_put_device(cable2, key="known", policy="iommu")
+        self.store_put_device(ssd2, key="known", policy="auto")
 
         self.daemon_start()
 
@@ -2095,7 +2172,7 @@ class BoltTest(dbusmock.DBusTestCase):
         tape = remote_ssd2.record()
         with remote_ssd2.record() as tape:
             if remote_ssd2.status != BoltDevice.AUTHORIZED:
-                tape.wait_for_props(Status='authorized')
+                tape.wait_for_props(Status="authorized")
 
         self.assertEqual(remote_ssd2.status, BoltDevice.AUTHORIZED)
 
@@ -2114,15 +2191,17 @@ class BoltTest(dbusmock.DBusTestCase):
 
         for i, d in enumerate(devs):
             did = i + 1
-            path, uid = self.add_device(host,
-                                        did,
-                                        "Dock%d" % did,
-                                        "GNOME.org",
-                                        authorized=d['authorized'],
-                                        key=d['key'],
-                                        boot='%d' % d['boot'])
-            d['path'] = path
-            d['uid'] = uid
+            path, uid = self.add_device(
+                host,
+                did,
+                "Dock%d" % did,
+                "GNOME.org",
+                authorized=d["authorized"],
+                key=d["key"],
+                boot="%d" % d["boot"],
+            )
+            d["path"] = path
+            d["uid"] = uid
 
         self.daemon_start()
         self.polkitd_start()
@@ -2132,16 +2211,16 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertEqual(len(devices), len(devs) + 1)
 
         for d in devs:
-            remote = self.find_device_by_uid(devices, d['uid'])
+            remote = self.find_device_by_uid(devices, d["uid"])
 
-            if d['authorized'] > 0:
+            if d["authorized"] > 0:
                 status = BoltDevice.AUTHORIZED
             else:
                 status = BoltDevice.CONNECTED
 
             self.assertEqual(remote.status, status)
 
-            policy = d['policy']
+            policy = d["policy"]
 
             if policy is not None:
                 stored = True
@@ -2152,42 +2231,42 @@ class BoltTest(dbusmock.DBusTestCase):
 
         self.daemon_stop()
 
-    @Parameterize.make(iommu='1')
+    @Parameterize.make(iommu="1")
     def test_device_import_sl0(self, iommu=None):
         # no security, kinda game over, because the device already has
         # full access now
 
         devs = [
-            {'authorized': 1, 'key': None, 'boot': 0, 'policy': 'iommu'},
-            {'authorized': 1, 'key': None, 'boot': 1, 'policy': 'iommu'},
+            {"authorized": 1, "key": None, "boot": 0, "policy": "iommu"},
+            {"authorized": 1, "key": None, "boot": 1, "policy": "iommu"},
         ]
 
-        self.device_import_test('none', devs, iommu)
+        self.device_import_test("none", devs, iommu)
 
-    @Parameterize.make(iommu='1')
+    @Parameterize.make(iommu="1")
     def test_device_import_sl1(self, iommu=None):
 
-        policy = 'iommu' if iommu else 'auto'
+        policy = "iommu" if iommu else "auto"
 
         devs = [
             # no boot flag -> not importing
-            {'authorized': 1, 'key': None, 'boot': 0, 'policy': None},
+            {"authorized": 1, "key": None, "boot": 0, "policy": None},
             # boot flag, and user mode -> importing
-            {'authorized': 1, 'key': None, 'boot': 1, 'policy': policy},
+            {"authorized": 1, "key": None, "boot": 1, "policy": policy},
         ]
 
         if not iommu:
             # pylint: disable=bad-whitespace
             devs += [
                 # check we are not auto-importing un-authorized devices
-                {'authorized': 0, 'key': None, 'boot': 0, 'policy': None},
-                {'authorized': 0, 'key': '',   'boot': 0, 'policy': None},
+                {"authorized": 0, "key": None, "boot": 0, "policy": None},
+                {"authorized": 0, "key": "", "boot": 0, "policy": None},
             ]
             # pylint: enable=bad-whitespace
 
-        self.device_import_test('user', devs, iommu)
+        self.device_import_test("user", devs, iommu)
 
-    @Parameterize.make(iommu='1')
+    @Parameterize.make(iommu="1")
     def test_device_import_sl2(self, iommu=None):
         # like test_device_auto_import but in SECURE mode
         key = self.key
@@ -2195,49 +2274,51 @@ class BoltTest(dbusmock.DBusTestCase):
         # pylint: disable=bad-whitespace
         devs = [
             # no boot flag, not importing
-            {'authorized': 1, 'key': None, 'boot': 0, 'policy': None},
-            {'authorized': 2, 'key': key,  'boot': 0, 'policy': None},
+            {"authorized": 1, "key": None, "boot": 0, "policy": None},
+            {"authorized": 2, "key": key, "boot": 0, "policy": None},
             # boot flag present but no valid key, not importing
-            {'authorized': 1, 'key': None, 'boot': 1, 'policy': 'iommu'},
-            {'authorized': 1, 'key': '',   'boot': 1, 'policy': 'iommu'},
+            {"authorized": 1, "key": None, "boot": 1, "policy": "iommu"},
+            {"authorized": 1, "key": "", "boot": 1, "policy": "iommu"},
             # boot, valid key, should not be possible to observe "in the wild"
-            {'authorized': 2, 'key': key,  'boot': 1, 'policy': 'iommu'},
+            {"authorized": 2, "key": key, "boot": 1, "policy": "iommu"},
         ]
 
         if not iommu:
             devs += [
                 # check we are not auto-importing un-authorized devices
-                {'authorized': 0, 'key': None, 'boot': 0, 'policy': None},
-                {'authorized': 0, 'key': '',   'boot': 0, 'policy': None},
+                {"authorized": 0, "key": None, "boot": 0, "policy": None},
+                {"authorized": 0, "key": "", "boot": 0, "policy": None},
             ]
-         # pylint: enable=bad-whitespace
+        # pylint: enable=bad-whitespace
 
-        self.device_import_test('secure', devs, iommu)
+        self.device_import_test("secure", devs, iommu)
 
-    @Parameterize.make(iommu='1')
+    @Parameterize.make(iommu="1")
     def test_device_import_sl3(self, iommu=None):
         # auto import test for dponly mode, i.e no pci express tunnels
         # in that mode all devices will always be marked as authorized
 
         devs = [
-            {'authorized': 1, 'key': None, 'boot': 0, 'policy': None},
-            {'authorized': 1, 'key': None, 'boot': 1, 'policy': None},
+            {"authorized": 1, "key": None, "boot": 0, "policy": None},
+            {"authorized": 1, "key": None, "boot": 1, "policy": None},
         ]
 
-        self.device_import_test('dponly', devs, iommu)
+        self.device_import_test("dponly", devs, iommu)
 
     def test_device_auto_enroll(self):
         # the negative tests, i.e. that devices are not auto-enrolled when iommu is
         # disabled is done via test_basic and test_device_auto_import_{sl1, sl2}
 
-        tree = TbDomain(host=TbHost([
-            TbDevice('Cable1', children=[
-                TbDevice('Dock1')
-            ]),
-            TbDevice('Cable2', children=[
-                TbDevice('SSD1', key=None)
-            ]),
-        ]), acl=8, iommu='1')
+        tree = TbDomain(
+            host=TbHost(
+                [
+                    TbDevice("Cable1", children=[TbDevice("Dock1")]),
+                    TbDevice("Cable2", children=[TbDevice("SSD1", key=None)]),
+                ]
+            ),
+            acl=8,
+            iommu="1",
+        )
 
         tree.connect_tree(self.testbed)
 
@@ -2287,7 +2368,7 @@ class BoltTest(dbusmock.DBusTestCase):
                 client.enroll(d.unique_id)
             self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.enroll'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.enroll"])
 
         # check we get a proper error for a unknown device
         with self.assertRaises(GLib.GError) as cm:
@@ -2346,7 +2427,7 @@ class BoltTest(dbusmock.DBusTestCase):
             devices = self.client.list_peripherals()
         self.assertEqual(len(devices), expected_number)
 
-        tree.connect(self.testbed)              # we connect the domain again
+        tree.connect(self.testbed)  # we connect the domain again
         tree.children[0].connect(self.testbed)  # and the host too
 
         for i, remote in enumerate(devices):
@@ -2363,9 +2444,9 @@ class BoltTest(dbusmock.DBusTestCase):
             with remote.record() as tape:
                 local.connect(self.testbed)
                 if policy == BoltClient.POLICY_AUTO:
-                    status = 'authorized'
+                    status = "authorized"
                 else:
-                    status = 'connected'
+                    status = "connected"
                 tape.wait_for_props(Status=status)
                 local.reload_auth()  # will emit the uevent, so the daemon can update
                 self.assertDeviceEqual(local, remote)
@@ -2374,8 +2455,12 @@ class BoltTest(dbusmock.DBusTestCase):
         key = self.key
 
         _, host = self.add_domain_host()
-        _, d1_uid = self.add_device(host, 1, "Dock", "GNOME.org", authorized=2, key=key, boot='0')
-        _, d2_uid = self.add_device(host, 2, "Dock2", "GNOME.org", authorized=1, key=None, boot='0')
+        _, d1_uid = self.add_device(
+            host, 1, "Dock", "GNOME.org", authorized=2, key=key, boot="0"
+        )
+        _, d2_uid = self.add_device(
+            host, 2, "Dock2", "GNOME.org", authorized=1, key=None, boot="0"
+        )
 
         self.daemon_start()
         self.polkitd_start()
@@ -2384,7 +2469,7 @@ class BoltTest(dbusmock.DBusTestCase):
         devices = self.client.list_devices()
         self.assertEqual(len(devices), 3)
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.enroll'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.enroll"])
 
         d1_remote = self.find_device_by_uid(devices, d1_uid)
         d2_remote = self.find_device_by_uid(devices, d2_uid)
@@ -2411,24 +2496,32 @@ class BoltTest(dbusmock.DBusTestCase):
         self.daemon_stop()
 
     def test_enroll_iommu(self):
-        _, host = self.add_domain_host(security='secure', iommu='1')
+        _, host = self.add_domain_host(security="secure", iommu="1")
 
         self.daemon_start()
         self.polkitd_start()
         client = self.client
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.manage',
-                                 'org.freedesktop.bolt.enroll',
-                                 'org.freedesktop.bolt.authorize'])
+        self.polkitd.SetAllowed(
+            [
+                "org.freedesktop.bolt.manage",
+                "org.freedesktop.bolt.enroll",
+                "org.freedesktop.bolt.authorize",
+            ]
+        )
 
         # disable the authorization globally
         with client.record() as tape:
-            client.auth_mode = 'disabled'
-            tape.wait_for_props(AuthMode='disabled')
-        self.assertEqual(client.auth_mode, 'disabled')
+            client.auth_mode = "disabled"
+            tape.wait_for_props(AuthMode="disabled")
+        self.assertEqual(client.auth_mode, "disabled")
 
-        _, d1_uid = self.add_device(host, 1, "Dock", "GNOME.org", authorized=0, key='', boot='0')
-        _, d2_uid = self.add_device(host, 2, "Dock2", "GNOME.org", authorized=0, key=None, boot='0')
+        _, d1_uid = self.add_device(
+            host, 1, "Dock", "GNOME.org", authorized=0, key="", boot="0"
+        )
+        _, d2_uid = self.add_device(
+            host, 2, "Dock2", "GNOME.org", authorized=0, key=None, boot="0"
+        )
 
         devices = self.client.list_devices()
         self.assertEqual(len(devices), 3)
@@ -2447,9 +2540,9 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # enable the authorization again now
         with client.record() as tape:
-            client.auth_mode = 'enabled'
-            tape.wait_for_props(AuthMode='enabled')
-        self.assertEqual(client.auth_mode, 'enabled')
+            client.auth_mode = "enabled"
+            tape.wait_for_props(AuthMode="enabled")
+        self.assertEqual(client.auth_mode, "enabled")
 
         # with iommu enabled, the policy should be adjusted to 'IOMMU'
         policy = BoltClient.POLICY_DEFAULT
@@ -2465,16 +2558,19 @@ class BoltTest(dbusmock.DBusTestCase):
             self.assertTrue(remote.StoreTime <= now)
 
     def test_device_key_upgrade(self):
-        dock = TbDevice('Dock',)
-        ssd1 = TbDevice('SSD1',)
-        ssd2 = TbDevice('SSD2',)
+        dock = TbDevice(
+            "Dock",
+        )
+        ssd1 = TbDevice(
+            "SSD1",
+        )
+        ssd2 = TbDevice(
+            "SSD2",
+        )
         ssd2.key = None
-        tree = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        host=TbHost([
-                            dock,
-                            ssd1,
-                            ssd2
-                        ]))
+        tree = TbDomain(
+            security=TbDomain.SECURITY_SECURE, host=TbHost([dock, ssd1, ssd2])
+        )
 
         tree.connect_tree(self.testbed)
         self.store_put_device(dock)
@@ -2485,7 +2581,7 @@ class BoltTest(dbusmock.DBusTestCase):
 
         devices = self.client.list_devices()
         self.assertEqual(len(devices), len(tree.devices))
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.authorize'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.authorize"])
 
         remote_dock = self.find_device_by_uid(devices, dock.unique_id)
         remote_ssd1 = self.find_device_by_uid(devices, ssd1.unique_id)
@@ -2497,17 +2593,17 @@ class BoltTest(dbusmock.DBusTestCase):
 
         with remote_dock.record() as tape:
             remote_dock.authorize()
-            tape.wait_for_props(Key='new')
+            tape.wait_for_props(Key="new")
         self.assertEqual(remote_dock.key, BoltDevice.KEY_NEW)
 
         with remote_ssd1.record() as tape:
             remote_ssd1.authorize()
-            tape.wait_for_props(Status='authorized')
+            tape.wait_for_props(Status="authorized")
         self.assertEqual(remote_ssd1.key, BoltDevice.KEY_MISSING)
 
         with remote_ssd2.record() as tape:
             remote_ssd2.authorize()
-            tape.wait_for_props(Status='authorized')
+            tape.wait_for_props(Status="authorized")
         self.assertEqual(remote_ssd2.key, BoltDevice.KEY_MISSING)
 
     def test_device_forget(self):
@@ -2517,7 +2613,7 @@ class BoltTest(dbusmock.DBusTestCase):
         tree.connect_tree(self.testbed)
 
         client = self.client
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.enroll'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.enroll"])
 
         to_enroll = tree.collect(TbDevice.is_unauthorized)
         policy = BoltClient.POLICY_AUTO
@@ -2544,7 +2640,7 @@ class BoltTest(dbusmock.DBusTestCase):
                 client.forget(remote.uid)
             self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.manage'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.manage"])
 
         # check we get a proper error for a unknown device
         with self.assertRaises(GLib.GError) as cm:
@@ -2571,7 +2667,7 @@ class BoltTest(dbusmock.DBusTestCase):
         tree.connect_tree(self.testbed)
 
         client = self.client
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.enroll'])
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.enroll"])
 
         local = tree.collect(TbDevice.is_unauthorized)[0]
         policy = BoltClient.POLICY_AUTO
@@ -2587,11 +2683,11 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertEqual(remote.policy, policy)
 
         with self.assertRaises(GLib.GError) as cm:
-            remote.label = 'not authorized'
+            remote.label = "not authorized"
         self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.manage'])
-        for val in ['', ' ', '     ']:
+        self.polkitd.SetAllowed(["org.freedesktop.bolt.manage"])
+        for val in ["", " ", "     "]:
             with self.assertRaises(GLib.GError) as cm:
                 remote.label = val
             self.assertGError(cm, Gio.DBusError.INVALID_ARGS)
@@ -2600,7 +2696,7 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # store update failure check is done in test_device_store_failures
 
-        val = 'A valid label'
+        val = "A valid label"
 
         with remote.record() as tape:
             remote.label = val
@@ -2617,8 +2713,9 @@ class BoltTest(dbusmock.DBusTestCase):
         tree.connect_tree(self.testbed)
 
         client = self.client
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.enroll',
-                                 'org.freedesktop.bolt.manage'])
+        self.polkitd.SetAllowed(
+            ["org.freedesktop.bolt.enroll", "org.freedesktop.bolt.manage"]
+        )
 
         local = tree.collect(TbDevice.is_unauthorized)[0]
         policy = BoltClient.POLICY_AUTO
@@ -2629,33 +2726,36 @@ class BoltTest(dbusmock.DBusTestCase):
         label = remote.label
 
         # check for store errors and verify the label did not change
-        with self.assertRaises(GLib.GError) as cm, \
-             self.store_deny_device(local.unique_id):
-            remote.label = 'denied'
+        with self.assertRaises(GLib.GError) as cm, self.store_deny_device(
+            local.unique_id
+        ):
+            remote.label = "denied"
         self.assertGError(cm, Gio.IOErrorEnum.PERMISSION_DENIED)
         self.assertEqual(remote.label, label)
 
         # check store update failures
-        with self.assertRaises(GLib.GError) as cm, \
-             self.store_deny_device(local.unique_id):
-            remote.policy = 'iommu'
+        with self.assertRaises(GLib.GError) as cm, self.store_deny_device(
+            local.unique_id
+        ):
+            remote.policy = "iommu"
         self.assertGError(cm, Gio.IOErrorEnum.PERMISSION_DENIED)
         self.assertEqual(remote.policy, policy)
 
         self.daemon_stop()
 
     def test_device_policy(self):
-        dock = TbDevice('Dock', gen=3)
-        tree = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        acl=16,
-                        host=TbHost([dock]))
+        dock = TbDevice("Dock", gen=3)
+        tree = TbDomain(security=TbDomain.SECURITY_SECURE, acl=16, host=TbHost([dock]))
         tree.connect_tree(self.testbed)
 
         # multiple domain controller for bootacl checks
-        ssd = TbDevice('SSD', gen=4)
-        dom2 = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        index=1, acl=16,
-                        host=TbHost([ssd], name="Laptop1"))
+        ssd = TbDevice("SSD", gen=4)
+        dom2 = TbDomain(
+            security=TbDomain.SECURITY_SECURE,
+            index=1,
+            acl=16,
+            host=TbHost([ssd], name="Laptop1"),
+        )
         dom2.connect_tree(self.testbed)
 
         self.daemon_start()
@@ -2666,15 +2766,16 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # we are not allowed to manage the device
         with self.assertRaises(GLib.GError) as cm:
-            remote.policy = 'iommu'
+            remote.policy = "iommu"
         self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.manage',
-                                 'org.freedesktop.bolt.enroll'])
+        self.polkitd.SetAllowed(
+            ["org.freedesktop.bolt.manage", "org.freedesktop.bolt.enroll"]
+        )
 
         # device is not stored
         with self.assertRaises(GLib.GError) as cm:
-            remote.policy = 'iommu'
+            remote.policy = "iommu"
         self.assertGError(cm, Gio.DBusError.INVALID_ARGS)
 
         # enroll the device with manual policy
@@ -2687,15 +2788,15 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # policy is invalid
         with self.assertRaises(GLib.GError) as cm:
-            remote.policy = 'foobar'
+            remote.policy = "foobar"
         self.assertGError(cm, Gio.DBusError.INVALID_ARGS)
 
         # store update failure check is done in test_device_store_failures
 
         # finally a valid update
         with remote.record() as tape:
-            remote.policy = 'iommu'
-            tape.wait_for_props(Policy='iommu')
+            remote.policy = "iommu"
+            tape.wait_for_props(Policy="iommu")
         self.assertEqual(remote.policy, BoltClient.POLICY_IOMMU)
 
         # enroll the ssd with manual policy
@@ -2709,8 +2810,8 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # policy -> auto, check that it got added to the bootacl
         with remote.record() as tape:
-            remote.policy = 'auto'
-            tape.wait_for_props(Policy='auto')
+            remote.policy = "auto"
+            tape.wait_for_props(Policy="auto")
         self.assertEqual(remote.policy, BoltClient.POLICY_AUTO)
 
         for dom in [tree, dom2]:
@@ -2719,8 +2820,8 @@ class BoltTest(dbusmock.DBusTestCase):
 
         # policy -> manual, check it got removed from the bootacl
         with remote.record() as tape:
-            remote.policy = 'auto'
-            tape.wait_for_props(Policy='auto')
+            remote.policy = "auto"
+            tape.wait_for_props(Policy="auto")
         self.assertEqual(remote.policy, BoltClient.POLICY_AUTO)
 
         for dom in [tree, dom2]:
@@ -2728,16 +2829,13 @@ class BoltTest(dbusmock.DBusTestCase):
             self.assertIn(ssd.unique_id, domain.bootacl)
 
     def test_device_generation(self):
-        dock = TbDevice('Dock', gen=3)
-        ssd1 = TbDevice('SSD1', gen=1)
-        ssd2 = TbDevice('SSD2', gen=2)
-        ssd2 = TbDevice('Ethernet', gen=None)
-        tree = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        host=TbHost([
-                            dock,
-                            ssd1,
-                            ssd2
-                        ], gen=4))
+        dock = TbDevice("Dock", gen=3)
+        ssd1 = TbDevice("SSD1", gen=1)
+        ssd2 = TbDevice("SSD2", gen=2)
+        ssd2 = TbDevice("Ethernet", gen=None)
+        tree = TbDomain(
+            security=TbDomain.SECURITY_SECURE, host=TbHost([dock, ssd1, ssd2], gen=4)
+        )
 
         tree.connect_tree(self.testbed)
         self.daemon_start()
@@ -2750,7 +2848,7 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertEqual(self.client.generation, 4)
 
     def test_device_generation_update(self):
-        dock = TbDevice('Dock', gen=0)
+        dock = TbDevice("Dock", gen=0)
         host = TbHost([dock], gen=0)
         tree = TbDomain(security=TbDomain.SECURITY_SECURE, host=host)
 
@@ -2781,11 +2879,11 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertEqual(stored.generation, 3)
 
     def test_device_linkspeed(self):
-        dock = TbDevice('Dock', gen=1)
+        dock = TbDevice("Dock", gen=1)
         host = TbHost([dock], gen=0)
         tree = TbDomain(security=TbDomain.SECURITY_SECURE, host=host)
 
-        linkspeed = {'rx.speed': 20, 'rx.lanes': 1, 'tx.speed': 10, 'tx.lanes': 2}
+        linkspeed = {"rx.speed": 20, "rx.lanes": 1, "tx.speed": 10, "tx.lanes": 2}
         dock.linkspeed = linkspeed
 
         tree.connect_tree(self.testbed)
@@ -2796,69 +2894,72 @@ class BoltTest(dbusmock.DBusTestCase):
         self.assertEqual(remote.linkspeed, linkspeed)
 
         with remote.record() as tape:
-            linkspeed = {'rx.speed': 20, 'rx.lanes': 2, 'tx.speed': 10, 'tx.lanes': 1}
+            linkspeed = {"rx.speed": 20, "rx.lanes": 2, "tx.speed": 10, "tx.lanes": 1}
             dock.linkspeed = linkspeed
             tape.wait_for_props(LinkSpeed=linkspeed)
 
         self.daemon_stop()
 
     def test_sdnotify(self):
-        self.add_domain_host(security='secure', iommu='1')
+        self.add_domain_host(security="secure", iommu="1")
 
         self.daemon_start(sdnotify=True)
         self.polkitd_start()
 
-        assert(self.sdnotify)
+        assert self.sdnotify
 
-        msgs = self.sdnotify.wait_for('STATUS')
+        msgs = self.sdnotify.wait_for("STATUS")
         self.assertTrue(msgs is not None)
 
         self.daemon_stop()
 
     def test_boltctl(self):
-        ssd1 = TbDevice('SSD1',)
-        cable1 = TbDevice('Cable1', children=[ssd1])
-        ssd2 = TbDevice('SSD2')
-        cable2 = TbDevice('Cable2', children=[ssd2])
-        ssd3 = TbDevice('SSD3')
-        cable3 = TbDevice('Cable3', children=[ssd3])
+        ssd1 = TbDevice(
+            "SSD1",
+        )
+        cable1 = TbDevice("Cable1", children=[ssd1])
+        ssd2 = TbDevice("SSD2")
+        cable2 = TbDevice("Cable2", children=[ssd2])
+        ssd3 = TbDevice("SSD3")
+        cable3 = TbDevice("Cable3", children=[ssd3])
 
-        host = TbHost([cable1,
-                       cable2,
-                       cable3])
-        tree = TbDomain(security=TbDomain.SECURITY_SECURE,
-                        host=host)
+        host = TbHost([cable1, cable2, cable3])
+        tree = TbDomain(security=TbDomain.SECURITY_SECURE, host=host)
 
         tree.connect_tree(self.testbed)
 
         self.daemon_start()
         self.polkitd_start()
 
-        out, _, res = self.boltctl('--version')
+        out, _, res = self.boltctl("--version")
         out = str(out)
         self.assertEqual(res, 0)
         self.assertNotEqual(len(out), 0)
-        self.assertIn('bolt', out)
+        self.assertIn("bolt", out)
 
-        out, _, res = self.boltctl('power', '-q')
+        out, _, res = self.boltctl("power", "-q")
         out = str(out)
         self.assertEqual(res, 0)
         self.assertNotEqual(len(out), 0)
-        self.assertIn('supported', out)
+        self.assertIn("supported", out)
 
-        out, _, res = self.boltctl('domains')
+        out, _, res = self.boltctl("domains")
         out = str(out)
         self.assertEqual(res, 0)
         self.assertNotEqual(len(out), 0)
         self.assertIn(tree.unique_id, out)
 
-        self.polkitd.SetAllowed(['org.freedesktop.bolt.authorize',
-                                 'org.freedesktop.bolt.enroll',
-                                 'org.freedesktop.bolt.manage'])
+        self.polkitd.SetAllowed(
+            [
+                "org.freedesktop.bolt.authorize",
+                "org.freedesktop.bolt.enroll",
+                "org.freedesktop.bolt.manage",
+            ]
+        )
 
         to_enroll = [cable1, ssd1]
 
-        out, _, res = self.boltctl('list')
+        out, _, res = self.boltctl("list")
         out = str(out)
         self.assertEqual(res, 0)
         for dev in to_enroll:
@@ -2866,7 +2967,7 @@ class BoltTest(dbusmock.DBusTestCase):
 
         for dev in to_enroll:
             uid = dev.unique_id
-            _, _, res = self.boltctl('authorize', uid)
+            _, _, res = self.boltctl("authorize", uid)
             self.assertEqual(res, 0)
 
             remote = self.client.device_by_uid(uid)
@@ -2875,21 +2976,21 @@ class BoltTest(dbusmock.DBusTestCase):
 
         for dev in to_enroll:
             uid = dev.unique_id
-            _, _, res = self.boltctl('enroll', uid)
+            _, _, res = self.boltctl("enroll", uid)
             self.assertEqual(res, 0)
 
             remote = self.client.device_by_uid(uid)
             self.assertEqual(remote.status, BoltDevice.AUTHORIZED)
             self.assertEqual(remote.stored, True)
 
-            out, _, res = self.boltctl('info', uid)
+            out, _, res = self.boltctl("info", uid)
             out = str(out)
             self.assertEqual(res, 0)
-            self.assertIn('authorized', out)
+            self.assertIn("authorized", out)
 
         for dev in to_enroll:
             uid = dev.unique_id
-            _, _, res = self.boltctl('forget', uid)
+            _, _, res = self.boltctl("forget", uid)
             self.assertEqual(res, 0)
 
             remote = self.client.device_by_uid(uid)
@@ -2897,14 +2998,14 @@ class BoltTest(dbusmock.DBusTestCase):
 
         for dev in to_enroll:
             uid = dev.unique_id
-            _, _, res = self.boltctl('enroll', uid)
+            _, _, res = self.boltctl("enroll", uid)
             self.assertEqual(res, 0)
 
             remote = self.client.device_by_uid(uid)
             self.assertEqual(remote.status, BoltDevice.AUTHORIZED)
             self.assertEqual(remote.stored, True)
 
-        _, _, res = self.boltctl('forget', '--all')
+        _, _, res = self.boltctl("forget", "--all")
         self.assertEqual(res, 0)
         for dev in to_enroll:
             uid = dev.unique_id
@@ -2912,7 +3013,7 @@ class BoltTest(dbusmock.DBusTestCase):
             self.assertEqual(remote.stored, False)
 
         # chain enrollment
-        _, _, res = self.boltctl('enroll', '--chain', ssd2.unique_id)
+        _, _, res = self.boltctl("enroll", "--chain", ssd2.unique_id)
         self.assertEqual(res, 0)
         for dev in [cable2, ssd2]:
             uid = dev.unique_id
@@ -2921,7 +3022,7 @@ class BoltTest(dbusmock.DBusTestCase):
             self.assertEqual(remote.stored, True)
 
         # chain authorization
-        _, _, res = self.boltctl('authorize', '--chain', ssd3.unique_id)
+        _, _, res = self.boltctl("authorize", "--chain", ssd3.unique_id)
         self.assertEqual(res, 0)
         for dev in [cable3, ssd3]:
             uid = dev.unique_id
@@ -2930,34 +3031,34 @@ class BoltTest(dbusmock.DBusTestCase):
             self.assertEqual(remote.stored, False)
 
         # boltctl config: describe properties
-        out, _, res = self.boltctl('config', '--describe')
+        out, _, res = self.boltctl("config", "--describe")
         out = str(out)
         self.assertEqual(res, 0)
         self.assertNotEqual(len(out), 0)
-        self.assertIn('auth-mode', out)
-        self.assertIn('domain.bootacl', out)
-        self.assertIn('device.label', out)
+        self.assertIn("auth-mode", out)
+        self.assertIn("domain.bootacl", out)
+        self.assertIn("device.label", out)
 
-        out, _, res = self.boltctl('config', 'auth-mode')
+        out, _, res = self.boltctl("config", "auth-mode")
         out = str(out)
         self.assertEqual(res, 0)
         self.assertNotEqual(len(out), 0)
-        self.assertIn('enabled', out)
+        self.assertIn("enabled", out)
 
         with self.client.record() as tape:
-            _, _, res = self.boltctl('config', 'auth-mode', 'disabled')
+            _, _, res = self.boltctl("config", "auth-mode", "disabled")
             self.assertEqual(res, 0)
-            tape.wait_for_props(AuthMode='disabled')
-        self.assertEqual(self.client.auth_mode, 'disabled')
+            tape.wait_for_props(AuthMode="disabled")
+        self.assertEqual(self.client.auth_mode, "disabled")
 
         # boltctl config: set device name
         target = ssd2.unique_id
         remote = self.client.device_by_uid(target)
         with remote.record() as tape:
-            _, _, res = self.boltctl('config', 'device.label', target, 'Nobody')
+            _, _, res = self.boltctl("config", "device.label", target, "Nobody")
             self.assertEqual(res, 0)
-            tape.wait_for_props(Label='Nobody')
-        self.assertEqual(remote.label, 'Nobody')
+            tape.wait_for_props(Label="Nobody")
+        self.assertEqual(remote.label, "Nobody")
 
         # all done
         self.daemon_stop()
@@ -2966,9 +3067,9 @@ class BoltTest(dbusmock.DBusTestCase):
 def list_tests():
     suit = unittest.defaultTestLoader.loadTestsFromTestCase(BoltTest)
     for t in suit:
-        comps = t.id().split('.')
+        comps = t.id().split(".")
         machine = ".".join(comps[1:])
-        human = comps[2][len('test_'):]
+        human = comps[2][len("test_") :]
         yield machine, human
 
 
@@ -2978,12 +3079,12 @@ def main():
             print("%s %s" % (machine, human), end="\n")
         sys.exit(0)
 
-    if 'umockdev' not in os.environ.get('LD_PRELOAD', ''):
-        wrapped = ['umockdev-wrapper'] + sys.argv
+    if "umockdev" not in os.environ.get("LD_PRELOAD", ""):
+        wrapped = ["umockdev-wrapper"] + sys.argv
         os.execvp(wrapped[0], wrapped)
 
     unittest.main(verbosity=2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
