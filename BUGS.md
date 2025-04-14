@@ -11,7 +11,7 @@ To replace the currently running daemon and run a new instance of it
 in the foreground, launch the daemon with `--replace`:
 
 ```bash
-$ boltd --replace
+boltd --replace
 ```
 
 [gitlab issues]: https://gitlab.freedesktop.org/bolt/bolt/issues

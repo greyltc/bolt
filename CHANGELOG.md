@@ -179,9 +179,9 @@ Released: 2018-11-28
       - domains are now stored in the boltd database
     - domains got the `BootACL` (dbus) / `bootacl` (object) property
       - uuids can be added, removed or set in batch
-      - when domain is *online*: changes are written to the sysfs `boot_acl` attribute directly
-      - when domain is *offline*: changes are written to a journal and then reapplied in order when the domain is connected
-    - newly enrolled devices get added to all bootacls of all domains *if* the `policy` is `BOLT_POLICY_AUTO`
+      - when domain is _online_: changes are written to the sysfs `boot_acl` attribute directly
+      - when domain is _offline_: changes are written to a journal and then reapplied in order when the domain is connected
+    - newly enrolled devices get added to all bootacls of all domains _if_ the `policy` is `BOLT_POLICY_AUTO`
     - removed devices get deleted from all bootacls of all domains
     - `boltacl domain` command will show the bootacl slots and their content
 

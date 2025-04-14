@@ -15,7 +15,7 @@ Make sure to format the source code before submitting pull requests.
 To run the test suite in verbose mode:
 
 ```bash
-$ meson test -C build --verbose
+meson test -C build --verbose
 ```
 
 To run `boltd` from within valgrind for the integration tests set the
@@ -33,20 +33,20 @@ To analyze the current code coverage either `lcov` or `gcovr` need
 to be installed. Support must also be enabled during configure time:
 
 ```bash
-$ meson -Db_coverage=true <buildir>
+meson -Db_coverage=true <buildir>
 ```
 
 This should enable the general `coverage` target as well as the
 `coverage-{text, html, xml}` targets:
 
 ```bash
-$ ninja -C <builddir> coverage
+ninja -C <builddir> coverage
 ```
 
 To manually invoke `gcovr` and exclude the `cli` directory use:
 
 ```bash
-$ gcovr -r <builddir> -e cli -s
+gcovr -r <builddir> -e cli -s
 ```
 
 ## Address Sanitizer
@@ -58,8 +58,8 @@ instead of pre-loaded via `LD_PRELOAD` when using `gcc`, which
 conflicts with our pre-load needed for `umockdev`.
 
 ```bash
-$ env CC=clang meson -Db_sanitize=address,undefined . <builddir>
-$ ninja -C <builddir> test
+env CC=clang meson -Db_sanitize=address,undefined . <builddir>
+ninja -C <builddir> test
 ```
 
 NB: There might be a warning that `b_lundef` is needed as well.
@@ -70,7 +70,7 @@ It seems to work just fine right now without it.
 The clang static analyzer can be run locally via:
 
 ```bash
-$ ninja -C <buildir> scan-build
+ninja -C <buildir> scan-build
 ```
 
 ## Coverity
@@ -80,9 +80,9 @@ execute the following commands (the `cov-build` [build tool][cov-build]
 must be in `PATH`) from the source directory:
 
 ```bash
-$ CC=gcc CXX=gcc meson -Dcoverity=true coverity
-$ cov-build --dir cov-int ninja -C coverity
-$ tar caf bolt.xz cov-int
+CC=gcc CXX=gcc meson -Dcoverity=true coverity
+cov-build --dir cov-int ninja -C coverity
+tar caf bolt.xz cov-int
 ```
 
 Upload the `bolt.xz` file to coverity for analysis. Fix defects. Profit.
