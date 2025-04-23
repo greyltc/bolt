@@ -1,13 +1,52 @@
 include:
   - project: 'freedesktop/ci-templates'
     ref: master
-    file:
-      - '/templates/fedora.yml'
+    file: '/templates/fedora.yml'
+  - project: 'freedesktop/ci-templates'
+    ref: master
+    file: '/templates/debian.yml'
+
+variables:
+  FDO_DISTRIBUTION_TAG: latest
+  FDO_DISTRIBUTION_VERSION: rawhide
+  FDO_UPSTREAM_REPO: "bolt/$CI_PROJECT_NAME"
+  FEDORA_IMAGE: "$CI_REGISTRY/bolt/$CI_PROJECT_NAME/fedora/$FDO_DISTRIBUTION_VERSION:$FDO_DISTRIBUTION_TAG"
+  DEPENDENCIES:
+    clang-analyzer
+    codespell
+    cmake
+    gcc
+    git
+    glib2-devel
+    glibc-langpack-en
+    gtk-doc
+    lcov
+    libgudev-devel
+    meson
+    polkit-devel
+    python3
+    python3-dbus
+    python3-dbusmock
+    python3-gobject
+    rpm-build
+    redhat-rpm-config
+    systemd-udev
+    systemd-devel
+    umockdev-devel
+    uncrustify
 
 image: !reference [ .fdo.container-build@fedora, image]
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_PIPELINE_SOURCE == 'push'
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+
 .build-template: &build
   script:
+    - dnf install -y buildah
+    - dnf install -y podman
     - buildah bud --isolation chroot -t bolt-$OS -f ./contrib/Dockerfile-$OS .
     - mkdir build-$OS
     - podman run --cap-drop=dac_override -e -t -v `pwd`:/src -v `pwd`/build-$OS:/build bolt-$OS ./contrib/docker-build.sh
@@ -15,6 +54,9 @@ image: !reference [ .fdo.container-build@fedora, image]
     paths:
     - build-$OS/meson-logs
     expire_in: 1 week
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
 
 fedora:
   stage: build
@@ -50,6 +92,9 @@ coverity:
     paths:
     - build-coverity/cov-int/build-log.txt
     expire_in: 1 week
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
 
 srpm_build:
   image: quay.io/packit/packit
@@ -60,3 +105,70 @@ srpm_build:
     paths:
       - "*.src.rpm"
     expire_in: 1 week
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
+
+# CONTAINERS creation stage
+container_fedora_build:
+  extends: .fdo.container-build@fedora
+  only:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule" && $CRON_TASK == "BUILD_CI_IMAGES"
+  variables:
+    GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
+    FDO_FORCE_REBUILD: 1
+    # a list of packages to install
+    FDO_DISTRIBUTION_PACKAGES:
+      $DEPENDENCIES
+
+# CONTAINERS creation stage
+container_debian_build:
+  extends: .fdo.container-build@debian
+  only:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule" && $CRON_TASK == "BUILD_CI_IMAGES"
+  variables:
+    FDO_DISTRIBUTION_TAG: latest
+    FDO_DISTRIBUTION_VERSION: trixie
+    GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
+    FDO_FORCE_REBUILD: 1
+    # a list of packages to install
+    FDO_DISTRIBUTION_PACKAGES:
+      autoconf
+      automake
+      autopoint
+      autotools-dev
+      binutils
+      binutils-common
+      binutils-x86-64-linux-gnu
+      bsdextrautils
+      build-essential
+      bzip2
+      cpp
+      cpp-14
+      cpp-14-x86-64-linux-gnu
+      cpp-x86-64-linux-gnu
+      curl
+      debhelper
+      git
+      g++
+      g++-14
+      g++-14-x86-64-linux-gnu
+      g++-x86-64-linux-gnu
+      gcc
+      gcc-14
+      gcc-14-x86-64-linux-gnu
+      gcc-x86-64-linux-gnu
+      m4
+      make
+      systemd-dev
+      python3-dbus
+      python3-packaging
+      python3-dbusmock
+      gir1.2-upowerglib-1.0
+      libpolkit-gobject-1-dev
+    FDO_DISTRIBUTION_EXEC: >-
+      echo "deb-src http://deb.debian.org/debian/ trixie main contrib non-free" >> /etc/apt/sources.list &&
+      apt update &&
+      apt build-dep -y bolt
