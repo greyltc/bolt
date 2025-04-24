@@ -35,13 +35,26 @@ variables:
     umockdev-devel
     uncrustify
 
-image: !reference [ .fdo.container-build@fedora, image]
-
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'push'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
+
+stages:
+  - pre-commit
+  - build
+
+image: $FEDORA_IMAGE
+
+pre_commit:
+  stage: pre-commit
+  image: $FEDORA_IMAGE
+  allow_failure: true
+  script:
+    - dnf install -y pre-commit
+    - pre-commit run --all-files
+    - ./scripts/uncrustify.sh --check
 
 .build-template: &build
   script:

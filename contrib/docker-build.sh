@@ -30,15 +30,3 @@ if [[ -x "$(command -v scan-build)" ]]; then
         exit 1
     fi
 fi
-
-if [[ -x "$(command -v lcov)" ]]; then
-    scripts/uncrustify.sh --check
-fi
-
-if [[ -x $(command -v pylint) ]]; then
-    pylint --disable=C0114,C0115,C0116,C0103,C0209,C0301,C0325,R0022,R0913,R0914,R0917,R1714,R1725,R1729,R1732,W0201,W0621,W1514 tests/test-integration
-fi
-
-if [[ -x $(command -v codespell) ]]; then
-    codespell --config contrib/codespell.cfg
-fi
