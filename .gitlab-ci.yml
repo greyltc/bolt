@@ -16,6 +16,7 @@ variables:
     codespell
     cmake
     gcc
+    gcovr
     git
     glib2-devel
     glibc-langpack-en
@@ -75,7 +76,22 @@ fedora:
   stage: build
   variables:
     OS: fedora
-  <<: *build
+  script:
+    - dnf install -y gcovr
+    - meson -Dbuildtype=debug -Db_coverage=true -Dtests-speed=slow . _build
+    - ninja -C _build
+    - meson test -C _build --verbose
+    - LC_ALL=C.UTF-8 ninja -C _build coverage-text
+    - SCANBUILD=`pwd`/contrib/scan-build.sh ninja -C _build scan-build
+
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs/"
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
 
 arch:
   stage: build
