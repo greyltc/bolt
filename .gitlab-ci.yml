@@ -98,10 +98,24 @@ fedora:
 
 arch:
   stage: build
+  image: registry.freedesktop.org/bolt/bolt/arch/rolling:latest
   allow_failure: true
   variables:
     OS: arch
-  <<: *build
+  script:
+    - meson -Dbuildtype=debug -Db_coverage=true -Dtests-speed=slow . _build
+    - ninja -C _build
+    - meson test -C _build --verbose
+    - LC_ALL=C.UTF-8 ninja -C _build coverage-text
+
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs/"
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
 
 alpine:
   stage: build
@@ -225,4 +239,5 @@ container_arch_build:
       python-gobject
       python-pip
       umockdev
+      gcovr
       valgrind
