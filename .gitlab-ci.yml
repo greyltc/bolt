@@ -5,6 +5,9 @@ include:
   - project: 'freedesktop/ci-templates'
     ref: master
     file: '/templates/debian.yml'
+  - project: 'freedesktop/ci-templates'
+    ref: master
+    file: '/templates/arch.yml'
 
 variables:
   FDO_DISTRIBUTION_TAG: latest
@@ -147,7 +150,6 @@ container_fedora_build:
     FDO_DISTRIBUTION_PACKAGES:
       $DEPENDENCIES
 
-# CONTAINERS creation stage
 container_debian_build:
   extends: .fdo.container-build@debian
   only:
@@ -197,3 +199,30 @@ container_debian_build:
       echo "deb-src http://deb.debian.org/debian/ trixie main contrib non-free" >> /etc/apt/sources.list &&
       apt update &&
       apt build-dep -y bolt
+
+container_arch_build:
+  extends: .fdo.container-build@arch
+  only:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule" && $CRON_TASK == "BUILD_CI_IMAGES"
+  variables:
+    FDO_DISTRIBUTION_TAG: latest
+    GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
+    FDO_FORCE_REBUILD: 1
+    # a list of packages to install
+    FDO_DISTRIBUTION_PACKAGES:
+      base-devel
+      asciidoc
+      glib2-devel
+      dbus-glib
+      git
+      gobject-introspection
+      gtk-doc
+      meson
+      perl-sgmls
+      polkit
+      python-dbus
+      python-gobject
+      python-pip
+      umockdev
+      valgrind
