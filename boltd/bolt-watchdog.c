@@ -48,6 +48,7 @@ struct _BoltWatchdog
   guint64 pulse;     /* the calculated pulse (sec) */
   guint   pulse_id;  /* source id for the pulse */
   gboolean supported; /* whether the watchdog is supported */
+  gboolean mock_watchdog; /* mocking the watchdog and skipping sd_*() calls */
 
 };
 
@@ -56,6 +57,7 @@ enum {
 
   PROP_TIMEOUT,
   PROP_PULSE,
+  PROP_MOCK_WATCHDOG,
 
   PROP_LAST
 };
@@ -117,6 +119,10 @@ bolt_watchdog_set_property (GObject      *object,
       dog->timeout = g_value_get_uint64 (value);
       break;
 
+    case PROP_MOCK_WATCHDOG:
+      dog->mock_watchdog = g_value_get_boolean (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -150,6 +156,13 @@ bolt_watchdog_class_init (BoltWatchdogClass *klass)
                        G_PARAM_READABLE |
                        G_PARAM_STATIC_STRINGS);
 
+  props[PROP_MOCK_WATCHDOG] =
+  g_param_spec_boolean ("mock-watchdog",
+                        "Mocking watchdog", NULL,
+                        FALSE,
+                        G_PARAM_READWRITE |
+                        G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (gobject_class,
                                      PROP_LAST,
                                      props);
@@ -173,6 +186,12 @@ bolt_watchdog_initialize (GInitable    *initable,
   int ret;
 
   ret = sd_watchdog_enabled(0, &dog->timeout);
+
+  if (dog->mock_watchdog)
+   {
+      dog->timeout = 6 * G_USEC_PER_SEC; /* 6 seconds */
+      ret = 1;
+   }
 
   if (ret <= 0)
     {
@@ -236,11 +255,8 @@ bolt_watchdog_ping (BoltWatchdog  *dog,
       return FALSE;
     }
 
-  if (!dog->supported)
-    {
-      /* not supported, no need to ping */
+  if (!dog->supported || dog->mock_watchdog)
       return TRUE;
-    }
 
   ret = sd_notify (0, "WATCHDOG=1");
   bolt_debug (LOG_TOPIC ("watchdog"), "ping sent");
