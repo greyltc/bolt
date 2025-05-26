@@ -28,6 +28,8 @@
 #include "bolt-unix.h"
 
 #include <inttypes.h>
+#include <systemd/sd-daemon.h>
+
 
 /* prototypes */
 static void     watchdog_initable_iface_init (GInitableIface *iface);
@@ -45,6 +47,7 @@ struct _BoltWatchdog
   guint64 timeout;   /* the actual timeout (usec) */
   guint64 pulse;     /* the calculated pulse (sec) */
   guint   pulse_id;  /* source id for the pulse */
+  gboolean supported; /* whether the watchdog is supported */
 
 };
 
@@ -167,14 +170,20 @@ bolt_watchdog_initialize (GInitable    *initable,
   guint64 quot, rem;
   guint pulse;
   guint tid;
-  int r;
+  int ret;
 
-  r = bolt_sd_watchdog_enabled (&dog->timeout, error);
+  ret = sd_watchdog_enabled(0, &dog->timeout);
 
-  if (r < 0)
-    return FALSE;
-  else if (r == 0)
-    return TRUE;
+  if (ret <= 0)
+    {
+      bolt_info (LOG_TOPIC ("watchdog"), "Watchdog is not supported or enabled.");
+      dog->supported = FALSE;
+      return TRUE;
+    }
+
+  bolt_info (LOG_TOPIC ("watchdog"), "Watchdog is enabled. The timeout is %lu", dog->timeout);
+  /* we have a valid timeout, so we can set up the pulse */
+  dog->supported = TRUE;
 
   quot = dog->timeout / G_USEC_PER_SEC;
   rem = dog->timeout % G_USEC_PER_SEC;
@@ -205,21 +214,59 @@ bolt_watchdog_initialize (GInitable    *initable,
   return TRUE;
 }
 
+/**
+ * bolt_watchdog_ping:
+ * @dog: a #BoltWatchdog
+ * @error: return location for a #GError, or %NULL
+ *
+ * ping the systemd watchdog.
+ *
+ * Returns: %TRUE on success, %FALSE on error.
+ **/
+gboolean
+bolt_watchdog_ping (BoltWatchdog  *dog,
+                    GError       **error)
+{
+  gboolean ret;
+
+  if (dog == NULL)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                           "watchdog is NULL");
+      return FALSE;
+    }
+
+  if (!dog->supported)
+    {
+      /* not supported, no need to ping */
+      return TRUE;
+    }
+
+  ret = sd_notify (0, "WATCHDOG=1");
+  bolt_debug (LOG_TOPIC ("watchdog"), "ping sent");
+
+  if (!ret)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                           "Failed to ping systemd watchdog");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 /* internal methods */
 static gboolean
 bolt_watchdog_on_pulse (gpointer user_data)
 {
+  BoltWatchdog *self = BOLT_WATCHDOG (user_data);
   g_autoptr(GError) err = NULL;
   gboolean ok;
-  gboolean sent;
 
-  ok = bolt_sd_notify_literal ("WATCHDOG=1", &sent, &err);
+  ok = bolt_watchdog_ping (self, &err);
 
   if (!ok)
     bolt_warn_err (err, LOG_TOPIC ("watchdog"), "failed to send ping");
-  else
-    bolt_debug (LOG_TOPIC ("watchdog"), "ping [sent: %s]",
-                bolt_yesno (sent));
 
   return G_SOURCE_CONTINUE;
 }

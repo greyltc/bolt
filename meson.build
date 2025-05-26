@@ -79,6 +79,7 @@ glib_req = '>= @0@.@1@.0'.format(glib_min[0], glib_min[1])
 glib    = dependency('glib-2.0', version: glib_req)
 gio     = dependency('gio-2.0')
 libudev = dependency('libudev')
+libsystemd = dependency('libsystemd')
 unix    = dependency('gio-unix-2.0')
 udev    = dependency('udev')
 polkit  = dependency('polkit-gobject-1')
@@ -327,6 +328,7 @@ install_data('data/90-bolt.rules',
 daemon_deps = [
   glib,
   gio,
+  libsystemd,
   libudev,
   polkit,
   unix,

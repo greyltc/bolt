@@ -653,7 +653,6 @@ manager_sd_notify_status (BoltManager *mgr)
   g_autofree char *status = NULL;
   const char *pstate = NULL;
   BoltPowerState power;
-  gboolean sent;
   gboolean authorizing;
   gboolean ok = FALSE;
 
@@ -666,14 +665,11 @@ manager_sd_notify_status (BoltManager *mgr)
                             (authorizing ? "enabled" : "DISABLED"),
                             (pstate ? : "unknown"));
 
-  ok = bolt_sd_notify_literal (status, &sent, &err);
+  ok = bolt_watchdog_ping (mgr->dog, &err);
 
   if (!ok)
     bolt_warn_err (err, LOG_TOPIC ("status"),
-                   "failed to send status");
-  else
-    bolt_debug (LOG_TOPIC ("status"), "%s [sent: %s]",
-                status, bolt_yesno (sent));
+                   "failed to ping systemd watchdog");
 }
 
 static void

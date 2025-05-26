@@ -30,5 +30,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (BoltWatchdog, bolt_watchdog, BOLT, WATCHDOG, GObject);
 
 BoltWatchdog  *             bolt_watchdog_new (GError **error);
+gboolean                    bolt_watchdog_ping (BoltWatchdog  *dog,
+                                                GError       **error);
 
 G_END_DECLS
