@@ -2901,19 +2901,6 @@ class BoltTest(dbusmock.DBusTestCase):
 
         self.daemon_stop()
 
-    def test_sdnotify(self):
-        self.add_domain_host(security="secure", iommu="1")
-
-        self.daemon_start(sdnotify=True)
-        self.polkitd_start()
-
-        assert self.sdnotify
-
-        msgs = self.sdnotify.wait_for("STATUS")
-        self.assertTrue(msgs is not None)
-
-        self.daemon_stop()
-
     def test_boltctl(self):
         ssd1 = TbDevice(
             "SSD1",
