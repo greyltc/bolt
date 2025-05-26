@@ -74,7 +74,7 @@ test_watchdog_basic (TestWatchdog *tt, gconstpointer user_data)
   guint64 timeout = 0;
   guint pulse;
 
-  /* watchdog env not set */
+  /* watchdog not support */
   dog = bolt_watchdog_new (&err);
   g_assert_no_error (err);
   g_assert_nonnull (dog);
@@ -87,23 +87,13 @@ test_watchdog_basic (TestWatchdog *tt, gconstpointer user_data)
   g_assert_cmpuint (timeout, ==, 0);
   g_assert_cmpuint (pulse, ==, 0);
 
-  /* invalid watchdog env */
-  g_setenv (BOLT_SD_WATCHDOG_USEC, "INVALID", TRUE);
-
+  /* running watchdog */
   g_clear_object (&dog);
 
-  dog = bolt_watchdog_new (&err);
-  g_assert_error (err, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT);
-  g_assert_null (dog);
-  g_clear_error (&err);
-  g_clear_object (&dog);
-
-  /* now with some actual valid socket, watchdog */
-  notify_socket_set_environment (tt->ns);
-  g_setenv (BOLT_SD_WATCHDOG_USEC, tt->timestr, TRUE);
-
-  g_clear_object (&dog);
-  dog = bolt_watchdog_new (&err);
+  dog = g_initable_new (BOLT_TYPE_WATCHDOG,
+                        NULL, &err,
+                        "mock-watchdog", TRUE,
+                        NULL);
   g_assert_no_error (err);
   g_assert_nonnull (dog);
 
