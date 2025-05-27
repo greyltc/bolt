@@ -121,9 +121,6 @@ coverity:
     paths:
     - build-coverity/cov-int/build-log.txt
     expire_in: 1 week
-  except:
-    variables:
-      - $CI_PIPELINE_SOURCE == "schedule"
 
 srpm_build:
   image: quay.io/packit/packit
@@ -134,9 +131,6 @@ srpm_build:
     paths:
       - "*.src.rpm"
     expire_in: 1 week
-  except:
-    variables:
-      - $CI_PIPELINE_SOURCE == "schedule"
 
 # CONTAINERS creation stage
 container_fedora_build:
