@@ -224,6 +224,15 @@ bolt_opendir (const char *path,
 
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
+  if (path == NULL)
+    {
+      g_set_error (error,
+                   G_IO_ERROR,
+                   G_IO_ERROR_INVALID_FILENAME,
+                   "a NULL path string");
+      return NULL;
+    }
+
   d = opendir (path);
   if (d == NULL)
     {

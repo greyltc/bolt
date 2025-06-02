@@ -782,7 +782,10 @@ authorize_device_internal (BoltDevice *dev,
 
   devdir = bolt_opendir (dev->syspath, error);
   if (devdir == NULL)
-    return FALSE;
+    {
+      bolt_debug (LOG_DEV (dev), LOG_TOPIC ("authorize"), "Error on opening dir");
+      return FALSE;
+    }
 
   ok = bolt_verify_uid (dirfd (devdir), dev->uid, error);
   if (!ok)
