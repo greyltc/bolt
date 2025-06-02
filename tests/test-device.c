@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include "bolt-auth.h"
 #include "bolt-device.h"
 
 #include "bolt-dbus.h"
@@ -87,6 +88,54 @@ test_device_basic (TestDevice *tt, gconstpointer user_data)
   g_assert_false (ok);
 }
 
+/* SIGSEGV when receiving a NULL path string */
+static void
+test_device_null_path (TestDevice *tt, gconstpointer user_data)
+{
+  g_autoptr(BoltAuth) auth = NULL;
+  g_autoptr(BoltDevice) dev = NULL;
+  g_autoptr(BoltDomain) dom = NULL;
+  g_autoptr(BoltStore) store = NULL;
+  g_autoptr(BoltKey) key = NULL;
+  g_autoptr(GError) err = NULL;
+  char uid[] = "fbc83890-e9bf-45e5-a777-b3728490989c";
+  BoltDeviceType devtype = BOLT_DEVICE_PERIPHERAL;
+  BoltSecurity sl;
+  guint gen;
+
+  dev = g_object_new (BOLT_TYPE_DEVICE,
+                      "uid", uid,
+                      "name", "Laptop",
+                      "vendor", "GNOME.org",
+                      "type", BOLT_DEVICE_HOST,
+                      "status", BOLT_STATUS_CONNECTED,
+                      "generation", 3,
+                      NULL);
+
+  g_assert_nonnull (dev);
+
+  g_object_get (dev,
+                "store", &store,
+                "domain", &dom,
+                "security", &sl,
+                "generation", &gen,
+                "type", &devtype,
+                NULL);
+  /* set syspath to NULL */
+  g_object_set (dev,
+                "sysfs-path", NULL,
+                NULL);
+
+  auth = bolt_auth_new (dev, BOLT_SECURITY_SECURE, key);
+
+  g_assert_null (store);
+  g_assert_null (dom);
+  g_assert_nonnull (auth);
+
+  bolt_device_authorize (dev, auth, NULL, &err);
+  /* no SIGSEGV when passing the NULL syspath */
+}
+
 int
 main (int argc, char **argv)
 {
@@ -101,6 +150,13 @@ main (int argc, char **argv)
               NULL,
               NULL,
               test_device_basic,
+              NULL);
+
+  g_test_add ("/device/authorize-null-path",
+              TestDevice,
+              NULL,
+              NULL,
+              test_device_null_path,
               NULL);
 
   return g_test_run ();
