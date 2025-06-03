@@ -1,3 +1,13 @@
+## Version 0.9.9
+
+Released: 2025-06-03
+
+- Several CI improvements and fixes.
+- Fixed memory leak in boltctl [!286]
+- The unused codes were removed from daemon [!289]
+- Fixed a NULL syspath variable causes SIGSEGV [!298]
+  <https://bugzilla.redhat.com/show_bug.cgi?id=2369103>
+
 ## Version 0.9.8
 
 Released: 2024-05-16
