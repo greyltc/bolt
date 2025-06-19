@@ -230,6 +230,7 @@ bolt_store_initialize (GInitable    *initable,
   g_autoptr(GError) err = NULL;
   g_autoptr(DIR) root = NULL;
   g_autofree char *path = NULL;
+  g_autofree gchar *version_path = NULL;
   BoltStore *store = BOLT_STORE (initable);
   gboolean ok;
 
@@ -247,6 +248,23 @@ bolt_store_initialize (GInitable    *initable,
                           "version",
                           &store->version,
                           &err);
+
+  /* if bolt failed to get version number from the file "version",
+   * bolt will write the version number to the "version" file and
+   * assume the version of the file store is the default version
+   * (BOLT_STORE_VERSION). */
+  version_path = g_build_filename (path, "version", NULL);
+  if (!ok && g_file_test (version_path, G_FILE_TEST_IS_REGULAR))
+    {
+      g_clear_error (&err);
+      bolt_debug (LOG_TOPIC ("store"), "Failed on reading version number. Rewrite the version and assume the file store version is %d", BOLT_STORE_VERSION);
+      bolt_write_uint_at (dirfd (root),
+                          "version",
+                          BOLT_STORE_VERSION,
+                          &err);
+      store->version = BOLT_STORE_VERSION;
+      return TRUE;
+    }
 
   if (!ok && !bolt_err_notfound (err))
     return bolt_error_propagate (error, &err);
