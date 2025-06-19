@@ -929,6 +929,56 @@ test_store_upgrade (TestStore *tt, gconstpointer user_data)
 
 }
 
+static void
+test_store_empty_version (TestStore *tt, gconstpointer user_data)
+{
+  g_autoptr(BoltDevice) dev = NULL;
+  g_autoptr(GError) err = NULL;
+  g_autoptr(DIR) root = NULL;
+  g_autofree gchar *path = NULL;
+  g_autofree gchar *version_path = NULL;
+  char uid[] = "fbc83890-e9bf-45e5-a777-b3728490989c";
+  guint version;
+  gboolean ok;
+
+  /* when opening an empty version file, bolt shouldn't exit
+   * #194 */
+
+  root = bolt_opendir (tt->path, &err);
+  g_assert_no_error (err);
+  g_assert_nonnull (root);
+
+  version = bolt_store_get_version (tt->store);
+  g_assert_cmpuint (version, ==, BOLT_STORE_VERSION);
+
+  dev = g_object_new (BOLT_TYPE_DEVICE,
+                      "uid", uid,
+                      "name", "Laptop",
+                      "vendor", "GNOME.org",
+                      "status", BOLT_STATUS_DISCONNECTED,
+                      NULL);
+
+  ok = bolt_store_put_device (tt->store, dev, BOLT_POLICY_AUTO, NULL, &err);
+  g_assert_no_error (err);
+  g_assert_true (ok);
+
+  /* close the store */
+  g_clear_object (&tt->store);
+
+  /* set an empty string to the version file */
+  version_path = g_build_filename (tt->path, "version", NULL);
+  g_file_set_contents (version_path, "", -1, &err);
+  g_assert_no_error (err);
+
+  /* re-create the store object and bolt shouldn't exit */
+  tt->store = bolt_store_new (tt->path, &err);
+  g_assert_no_error (err);
+  g_assert_nonnull (tt->store);
+
+  version = bolt_store_get_version (tt->store);
+  g_assert_cmpuint (version, ==, 1);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -1003,6 +1053,13 @@ main (int argc, char **argv)
               &test_context,
               test_store_setup,
               test_store_upgrade,
+              test_store_tear_down);
+
+  g_test_add ("/daemon/store/empty-version",
+              TestStore,
+              &test_context,
+              test_store_setup,
+              test_store_empty_version,
               test_store_tear_down);
 
   return g_test_run ();
