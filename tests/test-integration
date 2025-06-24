@@ -1101,11 +1101,6 @@ class BoltTest(dbusmock.DBusTestCase):
         # a well known key that can be used in testing
         cls.key = "b68bce095a13ac39e9254a88b189a38f240487aa6f78f803390a0cdeceb774d8"
 
-        # monkey patch Gio.IOErrorEnum to have a.quark() method
-        # so it behaves like Gio.DBusError
-        io_error_quark = GLib.quark_from_static_string("g-io-error-quark")
-        setattr(Gio.IOErrorEnum, "quark", lambda _self: io_error_quark)
-
     @classmethod
     def tearDownClass(cls):
         cls.test_bus.down()
@@ -1269,17 +1264,27 @@ class BoltTest(dbusmock.DBusTestCase):
         mt = TbDomain(host=TbHost([TbDevice("Dock")]))
         return mt
 
-    def assertGError(self, have, want):
+    @staticmethod
+    def assertGError(self, have, want_domain, want_code):
+        if have.domain == want_domain and have.code == int(want_code):
+            return
+
+        msg = "want: [%s (%d)], have [%s]" % (Gio.DBusError, int(want_code), have)
+        raise self.failureException(msg)
+
+    def assertGErrorDBusError(self, have, want):
         if hasattr(have, "exception"):
             have = have.exception
 
-        domain = GLib.quark_to_string(want.quark())
-        code = int(want)
-        if have.domain == domain and have.code == code:
-            return
+        domain = GLib.quark_to_string(Gio.DBusError.quark())
+        self.assertGError(self, have, domain, want)
 
-        msg = "want: [%s (%d)], have [%s]" % (want, code, have)
-        raise self.failureException(msg)
+    def assertGErrorIOErrorEnum(self, have, want):
+        if hasattr(have, "exception"):
+            have = have.exception
+
+        domain = GLib.quark_to_string(Gio.io_error_quark())
+        self.assertGError(self, have, domain, want)
 
     def assertDeviceEqual(self, local, remote):
         self.assertTrue(local and remote)
@@ -1601,7 +1606,7 @@ class BoltTest(dbusmock.DBusTestCase):
         for remote, uid in remotes:
             with self.assertRaises(GLib.GError) as cm:
                 client.enroll(uid)
-            self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
+            self.assertGErrorDBusError(cm, Gio.DBusError.ACCESS_DENIED)
 
         # enable the authorization again now
         with client.record() as tape:
@@ -1740,18 +1745,18 @@ class BoltTest(dbusmock.DBusTestCase):
         # try to set the bootacl, without PolKit allowing it
         with self.assertRaises(GLib.GError) as cm:
             domain.bootacl = [""]
-        self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
+        self.assertGErrorDBusError(cm, Gio.DBusError.ACCESS_DENIED)
         self.polkitd.SetAllowed(["org.freedesktop.bolt.manage"])
 
         # try to set an invalid bootacl
         with self.assertRaises(GLib.GError) as cm:
             domain.bootacl = [""]
-        self.assertGError(cm, Gio.IOErrorEnum.INVALID_ARGUMENT)
+        self.assertGErrorIOErrorEnum(cm, Gio.IOErrorEnum.INVALID_ARGUMENT)
 
         # try to set an invalid bootacl, 2nd time
         with self.assertRaises(GLib.GError) as cm:
             domain.bootacl = None
-        self.assertGError(cm, Gio.IOErrorEnum.INVALID_ARGUMENT)
+        self.assertGErrorIOErrorEnum(cm, Gio.IOErrorEnum.INVALID_ARGUMENT)
 
         # remove all entries
         with domain.record() as tape:
@@ -2004,7 +2009,7 @@ class BoltTest(dbusmock.DBusTestCase):
             remote = self.client.device_by_uid(d.unique_id)
             with self.assertRaises(GLib.GError) as cm:
                 remote.authorize()
-            self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
+            self.assertGErrorDBusError(cm, Gio.DBusError.ACCESS_DENIED)
 
         self.polkitd.SetAllowed(["org.freedesktop.bolt.authorize"])
         before = int(time.time())
@@ -2367,7 +2372,7 @@ class BoltTest(dbusmock.DBusTestCase):
         for d in to_enroll:
             with self.assertRaises(GLib.GError) as cm:
                 client.enroll(d.unique_id)
-            self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
+            self.assertGErrorDBusError(cm, Gio.DBusError.ACCESS_DENIED)
 
         self.polkitd.SetAllowed(["org.freedesktop.bolt.enroll"])
 
@@ -2639,7 +2644,7 @@ class BoltTest(dbusmock.DBusTestCase):
         for remote in devices:
             with self.assertRaises(GLib.GError) as cm:
                 client.forget(remote.uid)
-            self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
+            self.assertGErrorDBusError(cm, Gio.DBusError.ACCESS_DENIED)
 
         self.polkitd.SetAllowed(["org.freedesktop.bolt.manage"])
 
@@ -2685,13 +2690,13 @@ class BoltTest(dbusmock.DBusTestCase):
 
         with self.assertRaises(GLib.GError) as cm:
             remote.label = "not authorized"
-        self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
+        self.assertGErrorDBusError(cm, Gio.DBusError.ACCESS_DENIED)
 
         self.polkitd.SetAllowed(["org.freedesktop.bolt.manage"])
         for val in ["", " ", "     "]:
             with self.assertRaises(GLib.GError) as cm:
                 remote.label = val
-            self.assertGError(cm, Gio.DBusError.INVALID_ARGS)
+            self.assertGErrorDBusError(cm, Gio.DBusError.INVALID_ARGS)
 
         self.assertEqual(remote.label, "%s %s" % (local.vendor_name, local.device_name))
 
@@ -2731,7 +2736,7 @@ class BoltTest(dbusmock.DBusTestCase):
             local.unique_id
         ):
             remote.label = "denied"
-        self.assertGError(cm, Gio.IOErrorEnum.PERMISSION_DENIED)
+        self.assertGErrorIOErrorEnum(cm, Gio.IOErrorEnum.PERMISSION_DENIED)
         self.assertEqual(remote.label, label)
 
         # check store update failures
@@ -2739,7 +2744,7 @@ class BoltTest(dbusmock.DBusTestCase):
             local.unique_id
         ):
             remote.policy = "iommu"
-        self.assertGError(cm, Gio.IOErrorEnum.PERMISSION_DENIED)
+        self.assertGErrorIOErrorEnum(cm, Gio.IOErrorEnum.PERMISSION_DENIED)
         self.assertEqual(remote.policy, policy)
 
         self.daemon_stop()
@@ -2768,7 +2773,7 @@ class BoltTest(dbusmock.DBusTestCase):
         # we are not allowed to manage the device
         with self.assertRaises(GLib.GError) as cm:
             remote.policy = "iommu"
-        self.assertGError(cm, Gio.DBusError.ACCESS_DENIED)
+        self.assertGErrorDBusError(cm, Gio.DBusError.ACCESS_DENIED)
 
         self.polkitd.SetAllowed(
             ["org.freedesktop.bolt.manage", "org.freedesktop.bolt.enroll"]
@@ -2777,7 +2782,7 @@ class BoltTest(dbusmock.DBusTestCase):
         # device is not stored
         with self.assertRaises(GLib.GError) as cm:
             remote.policy = "iommu"
-        self.assertGError(cm, Gio.DBusError.INVALID_ARGS)
+        self.assertGErrorDBusError(cm, Gio.DBusError.INVALID_ARGS)
 
         # enroll the device with manual policy
         policy = BoltClient.POLICY_MANUAL
@@ -2790,7 +2795,7 @@ class BoltTest(dbusmock.DBusTestCase):
         # policy is invalid
         with self.assertRaises(GLib.GError) as cm:
             remote.policy = "foobar"
-        self.assertGError(cm, Gio.DBusError.INVALID_ARGS)
+        self.assertGErrorDBusError(cm, Gio.DBusError.INVALID_ARGS)
 
         # store update failure check is done in test_device_store_failures
 
