@@ -1,3 +1,10 @@
+## Version 0.9.10
+
+Released: 2025-06-25
+
+- Fix bolt exits when opening an empty version file [#194 !300]
+- Fix failure on integration test due to the change of the latest pygobject [#195 !301]
+
 ## Version 0.9.9
 
 Released: 2025-06-03

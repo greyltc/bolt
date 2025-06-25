@@ -1,6 +1,6 @@
 project('bolt',
   'c',
-  version: '0.9.9',
+  version: '0.9.10',
   license : 'LGPL-2.1-or-later',
   meson_version: '>= 0.60.0',
   default_options: ['warning_level=1',
