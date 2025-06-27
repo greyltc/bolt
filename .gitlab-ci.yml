@@ -8,6 +8,9 @@ include:
   - project: 'freedesktop/ci-templates'
     ref: master
     file: '/templates/arch.yml'
+  - project: 'freedesktop/ci-templates'
+    ref: master
+    file: '/templates/alpine.yml'
 
 variables:
   FDO_DISTRIBUTION_TAG: latest
@@ -119,9 +122,14 @@ arch:
 
 alpine:
   stage: build
+  image: registry.freedesktop.org/bolt/bolt/alpine/latest:latest
+  allow_failure: true
   variables:
     OS: alpine
-  <<: *build
+  script:
+    - meson -Dbuildtype=debug -Db_coverage=true -Dtests-speed=slow . _build
+    - ninja -C _build
+    - meson test -C _build --verbose
 
 coverity:
   stage: build
@@ -239,5 +247,29 @@ container_arch_build:
       python-gobject
       python-pip
       umockdev
+      gcovr
+      valgrind
+
+container_alpine_build:
+  extends: .fdo.container-build@alpine
+  only:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule" && $CRON_TASK == "BUILD_CI_IMAGES"
+  variables:
+    FDO_DISTRIBUTION_VERSION: 'latest'
+    FDO_DISTRIBUTION_TAG: 'latest'
+    FDO_FORCE_REBUILD: 1
+    FDO_DISTRIBUTION_PACKAGES:
+      bash
+      dbus
+      dbus-dev
+      eudev-dev
+      gcc
+      glib-dev
+      libc-dev
+      meson
+      ninja
+      polkit-dev
+      udev
       gcovr
       valgrind
