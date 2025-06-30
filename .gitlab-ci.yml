@@ -50,6 +50,7 @@ workflow:
 
 stages:
   - pre-commit
+  - srpm
   - build
 
 image: $FEDORA_IMAGE
@@ -151,7 +152,7 @@ coverity:
 
 srpm_build:
   image: quay.io/packit/packit
-  stage: build
+  stage: srpm
   script:
   - packit srpm
   artifacts:
