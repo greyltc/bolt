@@ -131,6 +131,14 @@ alpine:
     - meson -Dbuildtype=debug -Db_coverage=true -Dtests-speed=slow . _build
     - ninja -C _build
     - meson test -C _build --verbose
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - "${CI_PROJECT_DIR}/_build/meson-logs/"
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
 
 coverity:
   stage: build
@@ -138,7 +146,7 @@ coverity:
     refs:
       - schedules
     variables:
-      - $COVERITY_TOKEN && $COVERITY_EMAIL
+      - $COVERITY_TOKEN && $COVERITY_EMAIL && $CRON_TASK == "COVERITY"
   script:
     - dnf install -y buildah
     - dnf install -y podman
