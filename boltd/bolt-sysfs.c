@@ -623,6 +623,7 @@ static struct
   {0x15e8, TRUE},  // TITAN_RIDGE_2C_NHI
   {0x15eb, TRUE},  // TITAN_RIDGE_4C_NHI
   {0x162f, TRUE},  // REMBRANDT_NHI
+  {0x1137, TRUE},  // MAPLE_RIDGE_NHI
   {0x8a0d, FALSE}, // ICL_NHI1
   {0x8a17, FALSE}, // ICL_NHI0
   {0x9a1b, FALSE}, // TGL_NHI0
